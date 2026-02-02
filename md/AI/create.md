@@ -29,3 +29,5 @@ mvvm架构，
 
 1. md/规划/flutter/实现设计.md 设计不要直接编写实现代码，只要体现设计和技术栈库，这约束更新到ln/AI/skills/docs-style/SKILL.md
 1. md/规划/通用/架构设计.md 接口命名Base挺糟糕的，更新 ln/AI/skills/mvvm-guide/SKILL.md vmBase是给基类用的，用于大型vm拆分时的基类，这不是接口， 想办法描述清楚，
+
+1. 权限配置，
