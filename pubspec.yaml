@@ -4,6 +4,11 @@ publish_to: none
 environment:
   sdk: ^3.6.0
 
+
+workspace:
+  - apps/video_concat_app
+  - packages/ffmpeg_kit
+
 dev_dependencies:
   melos: ^7.3.0
 
