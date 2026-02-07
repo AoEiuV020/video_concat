@@ -48,3 +48,32 @@ mvvm架构，
 1. 到最后我也没搞明白 com.apple.security.files.user-selected.executable 的用途， 
 
 1. 写入文件还是需要权限， 报错了， ‘PlatformException (PlatformException(ENTITLEMENT_REQUIRED_WRITE, The Read-Write entitlement is required for this action., null, null))’
+
+1. 写个readme， 重点强调不重新编码，以及要求视频片段是完全相同的参数， 具体列出哪些可能有影响的参数，
+
+1. 系统要求， 理论上桌面版应该都支持？只测试了mac版， 这些都写上，
+1. 顺便检查一下当前代码在windows是否会有问题， 
+
+1. 关于windows， 参考如下脚本， 这是测试可行的，本应用尽量使用相同的处理，
+```
+@echo off
+set bin=%~dp0
+set old_path=%cd%
+set name=%~dpn1
+set out=%~dpnx1
+set a=%~dpnx2
+set b=%~dpnx3
+if "x%a%" neq "x" (
+    if "x%b%" neq "x" (
+    echo file '%a:\=/%' > %name%.merge_files
+    echo file '%b:\=/%' >> %name%.merge_files
+    call %0 %1
+    del %name%.merge_files
+    goto end:
+    )
+)
+
+%bin%ffmpeg -safe 0 -f concat -i "%name%.merge_files" -vcodec copy -acodec copy "%out:\=/%"
+
+:end
+```

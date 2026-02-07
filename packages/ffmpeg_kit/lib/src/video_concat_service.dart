@@ -23,24 +23,32 @@ class VideoConcatService {
     final tempDir = await Directory.systemTemp.createTemp('video_concat_');
     final listFile = File('${tempDir.path}/filelist.txt');
 
-    // 创建文件列表，转义单引号
-    final content = inputPaths
-        .map((p) => "file '${p.replaceAll("'", "'\\''")}'")
-        .join('\n');
+    // 创建文件列表
+    // Windows/Unix: 统一使用正斜杠路径
+    final content = inputPaths.map((p) {
+      final normalizedPath = p.replaceAll('\\', '/');
+      final escapedPath = normalizedPath.replaceAll("'", "'\\''");
+      return "file '$escapedPath'";
+    }).join('\n');
     await listFile.writeAsString(content);
+
+    // 输出路径也转换为正斜杠
+    final normalizedOutput = outputPath.replaceAll('\\', '/');
 
     try {
       return await _ffmpegService.execute(
         arguments: [
-          '-f',
-          'concat',
           '-safe',
           '0',
+          '-f',
+          'concat',
           '-i',
           listFile.path,
-          '-c',
+          '-vcodec',
           'copy',
-          outputPath,
+          '-acodec',
+          'copy',
+          normalizedOutput,
         ],
         onOutput: onOutput,
       );
