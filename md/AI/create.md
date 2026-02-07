@@ -37,3 +37,14 @@ mvvm架构，
 
 1. 没用， 不必要的话删了，
 1. 我听说有个“com.apple.security.files.user-selected.executable“，有用没？
+
+1. 还是得关闭沙盒才可以，难搞，
+1. 参考 https://www.dididigu.com/posts/mac-app-upload-and-sandbox-notes/ 看看有没有什么办法？
+
+1. 我已经关闭沙盒了， 你看看还有什么没用的可以删掉，
+
+1. 啥玩意儿连read-write都是不需要的吗？
+
+1. 到最后我也没搞明白 com.apple.security.files.user-selected.executable 的用途， 
+
+1. 写入文件还是需要权限， 报错了， ‘PlatformException (PlatformException(ENTITLEMENT_REQUIRED_WRITE, The Read-Write entitlement is required for this action., null, null))’
