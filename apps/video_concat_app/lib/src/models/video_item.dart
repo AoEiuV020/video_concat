@@ -9,5 +9,6 @@ abstract class VideoItem with _$VideoItem {
     required String id,
     required String filePath,
     required String fileName,
+    required int fileSize,
   }) = _VideoItem;
 }

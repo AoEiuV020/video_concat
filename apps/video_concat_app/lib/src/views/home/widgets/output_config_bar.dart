@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../utils/format_utils.dart';
 import '../../../view_models/home_state.dart';
 import '../../../view_models/home_viewmodel.dart';
 
@@ -18,6 +19,9 @@ class OutputConfigBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final totalSize =
+        state.videoItems.fold<int>(0, (sum, item) => sum + item.fileSize);
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
@@ -58,6 +62,15 @@ class OutputConfigBar extends StatelessWidget {
                     }
                   },
           ),
+          if (state.videoItems.isNotEmpty) ...[
+            const SizedBox(width: 16),
+            Text(
+              '≈ ${formatFileSize(totalSize)}',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.secondary,
+                  ),
+            ),
+          ],
         ],
       ),
     );

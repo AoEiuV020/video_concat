@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$VideoItem {
 
- String get id; String get filePath; String get fileName;
+ String get id; String get filePath; String get fileName; int get fileSize;
 /// Create a copy of VideoItem
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $VideoItemCopyWith<VideoItem> get copyWith => _$VideoItemCopyWithImpl<VideoItem>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VideoItem&&(identical(other.id, id) || other.id == id)&&(identical(other.filePath, filePath) || other.filePath == filePath)&&(identical(other.fileName, fileName) || other.fileName == fileName));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is VideoItem&&(identical(other.id, id) || other.id == id)&&(identical(other.filePath, filePath) || other.filePath == filePath)&&(identical(other.fileName, fileName) || other.fileName == fileName)&&(identical(other.fileSize, fileSize) || other.fileSize == fileSize));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,filePath,fileName);
+int get hashCode => Object.hash(runtimeType,id,filePath,fileName,fileSize);
 
 @override
 String toString() {
-  return 'VideoItem(id: $id, filePath: $filePath, fileName: $fileName)';
+  return 'VideoItem(id: $id, filePath: $filePath, fileName: $fileName, fileSize: $fileSize)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $VideoItemCopyWith<$Res>  {
   factory $VideoItemCopyWith(VideoItem value, $Res Function(VideoItem) _then) = _$VideoItemCopyWithImpl;
 @useResult
 $Res call({
- String id, String filePath, String fileName
+ String id, String filePath, String fileName, int fileSize
 });
 
 
@@ -62,12 +62,13 @@ class _$VideoItemCopyWithImpl<$Res>
 
 /// Create a copy of VideoItem
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? filePath = null,Object? fileName = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? filePath = null,Object? fileName = null,Object? fileSize = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,filePath: null == filePath ? _self.filePath : filePath // ignore: cast_nullable_to_non_nullable
 as String,fileName: null == fileName ? _self.fileName : fileName // ignore: cast_nullable_to_non_nullable
-as String,
+as String,fileSize: null == fileSize ? _self.fileSize : fileSize // ignore: cast_nullable_to_non_nullable
+as int,
   ));
 }
 
@@ -152,10 +153,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String filePath,  String fileName)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String filePath,  String fileName,  int fileSize)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _VideoItem() when $default != null:
-return $default(_that.id,_that.filePath,_that.fileName);case _:
+return $default(_that.id,_that.filePath,_that.fileName,_that.fileSize);case _:
   return orElse();
 
 }
@@ -173,10 +174,10 @@ return $default(_that.id,_that.filePath,_that.fileName);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String filePath,  String fileName)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String filePath,  String fileName,  int fileSize)  $default,) {final _that = this;
 switch (_that) {
 case _VideoItem():
-return $default(_that.id,_that.filePath,_that.fileName);case _:
+return $default(_that.id,_that.filePath,_that.fileName,_that.fileSize);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -193,10 +194,10 @@ return $default(_that.id,_that.filePath,_that.fileName);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String filePath,  String fileName)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String filePath,  String fileName,  int fileSize)?  $default,) {final _that = this;
 switch (_that) {
 case _VideoItem() when $default != null:
-return $default(_that.id,_that.filePath,_that.fileName);case _:
+return $default(_that.id,_that.filePath,_that.fileName,_that.fileSize);case _:
   return null;
 
 }
@@ -208,12 +209,13 @@ return $default(_that.id,_that.filePath,_that.fileName);case _:
 
 
 class _VideoItem implements VideoItem {
-  const _VideoItem({required this.id, required this.filePath, required this.fileName});
+  const _VideoItem({required this.id, required this.filePath, required this.fileName, required this.fileSize});
   
 
 @override final  String id;
 @override final  String filePath;
 @override final  String fileName;
+@override final  int fileSize;
 
 /// Create a copy of VideoItem
 /// with the given fields replaced by the non-null parameter values.
@@ -225,16 +227,16 @@ _$VideoItemCopyWith<_VideoItem> get copyWith => __$VideoItemCopyWithImpl<_VideoI
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _VideoItem&&(identical(other.id, id) || other.id == id)&&(identical(other.filePath, filePath) || other.filePath == filePath)&&(identical(other.fileName, fileName) || other.fileName == fileName));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _VideoItem&&(identical(other.id, id) || other.id == id)&&(identical(other.filePath, filePath) || other.filePath == filePath)&&(identical(other.fileName, fileName) || other.fileName == fileName)&&(identical(other.fileSize, fileSize) || other.fileSize == fileSize));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,filePath,fileName);
+int get hashCode => Object.hash(runtimeType,id,filePath,fileName,fileSize);
 
 @override
 String toString() {
-  return 'VideoItem(id: $id, filePath: $filePath, fileName: $fileName)';
+  return 'VideoItem(id: $id, filePath: $filePath, fileName: $fileName, fileSize: $fileSize)';
 }
 
 
@@ -245,7 +247,7 @@ abstract mixin class _$VideoItemCopyWith<$Res> implements $VideoItemCopyWith<$Re
   factory _$VideoItemCopyWith(_VideoItem value, $Res Function(_VideoItem) _then) = __$VideoItemCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String filePath, String fileName
+ String id, String filePath, String fileName, int fileSize
 });
 
 
@@ -262,12 +264,13 @@ class __$VideoItemCopyWithImpl<$Res>
 
 /// Create a copy of VideoItem
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? filePath = null,Object? fileName = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? filePath = null,Object? fileName = null,Object? fileSize = null,}) {
   return _then(_VideoItem(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,filePath: null == filePath ? _self.filePath : filePath // ignore: cast_nullable_to_non_nullable
 as String,fileName: null == fileName ? _self.fileName : fileName // ignore: cast_nullable_to_non_nullable
-as String,
+as String,fileSize: null == fileSize ? _self.fileSize : fileSize // ignore: cast_nullable_to_non_nullable
+as int,
   ));
 }
 

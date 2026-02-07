@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../models/models.dart';
+import '../../../utils/format_utils.dart';
 
 /// 视频列表项
 class VideoListTile extends StatelessWidget {
@@ -27,7 +28,7 @@ class VideoListTile extends StatelessWidget {
         overflow: TextOverflow.ellipsis,
       ),
       subtitle: Text(
-        item.filePath,
+        '${formatFileSize(item.fileSize)} • ${item.filePath}',
         overflow: TextOverflow.ellipsis,
         style: Theme.of(context).textTheme.bodySmall,
       ),

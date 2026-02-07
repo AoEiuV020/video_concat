@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../models/models.dart';
@@ -24,16 +26,20 @@ class HomeViewModel extends _$HomeViewModel {
   }
 
   /// 添加视频文件
-  void addVideos(List<String> filePaths) {
-    final newItems = filePaths.map((path) {
+  Future<void> addVideos(List<String> filePaths) async {
+    final newItems = <VideoItem>[];
+    for (final path in filePaths) {
+      final file = File(path);
       final fileName = path.split('/').last.split('\\').last;
-      return VideoItem(
+      final fileSize = await file.length();
+      newItems.add(VideoItem(
         id: DateTime.now().microsecondsSinceEpoch.toString() +
             filePaths.indexOf(path).toString(),
         filePath: path,
         fileName: fileName,
-      );
-    }).toList();
+        fileSize: fileSize,
+      ));
+    }
 
     final items = [...state.videoItems, ...newItems];
     state = state.copyWith(
