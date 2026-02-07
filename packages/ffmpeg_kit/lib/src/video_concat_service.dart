@@ -38,6 +38,7 @@ class VideoConcatService {
     try {
       return await _ffmpegService.execute(
         arguments: [
+          '-y', // 自动覆盖输出文件，不询问
           '-safe',
           '0',
           '-f',
@@ -59,4 +60,7 @@ class VideoConcatService {
 
   /// 中断合并
   void cancel() => _ffmpegService.cancel();
+
+  /// 是否已取消
+  bool get isCancelled => _ffmpegService.isCancelled;
 }

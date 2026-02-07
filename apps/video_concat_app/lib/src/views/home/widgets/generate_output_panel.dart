@@ -31,6 +31,10 @@ class GenerateOutputPanel extends StatelessWidget {
         backgroundColor = colorScheme.errorContainer;
         icon = Icons.error;
         break;
+      case GenerateState.cancelled:
+        backgroundColor = colorScheme.surfaceContainerHighest;
+        icon = Icons.cancel;
+        break;
       case GenerateState.idle:
         backgroundColor = colorScheme.surfaceContainerHighest;
         icon = Icons.info;
@@ -101,6 +105,8 @@ class GenerateOutputPanel extends StatelessWidget {
         return '合并完成';
       case GenerateState.failed:
         return '合并失败';
+      case GenerateState.cancelled:
+        return '已取消';
       case GenerateState.idle:
         return '输出';
     }

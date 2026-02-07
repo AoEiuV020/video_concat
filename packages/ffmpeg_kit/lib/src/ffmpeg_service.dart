@@ -18,6 +18,10 @@ class FFmpegService {
   /// 是否正在执行
   bool get isRunning => _currentProcess != null;
 
+  /// 是否已取消（用于区分正常退出和取消）
+  bool _cancelled = false;
+  bool get isCancelled => _cancelled;
+
   /// 验证 FFmpeg 是否可用
   Future<bool> validate() async {
     try {
@@ -37,6 +41,7 @@ class FFmpegService {
     required List<String> arguments,
     OutputCallback? onOutput,
   }) async {
+    _cancelled = false;
     _currentProcess = await Process.start(_ffmpegPath, arguments);
 
     _currentProcess!.stdout.transform(utf8.decoder).listen((data) {
@@ -54,7 +59,21 @@ class FFmpegService {
 
   /// 中断当前执行
   void cancel() {
-    _currentProcess?.kill();
-    _currentProcess = null;
+    final process = _currentProcess;
+    if (process != null) {
+      _cancelled = true;
+
+      // 先尝试发送 'q' 让 FFmpeg 优雅退出
+      try {
+        process.stdin.writeln('q');
+      } catch (_) {
+        // 忽略写入错误
+      }
+
+      // 如果 FFmpeg 没有响应，强制终止
+      Future.delayed(const Duration(milliseconds: 500), () {
+        process.kill(ProcessSignal.sigkill);
+      });
+    }
   }
 }

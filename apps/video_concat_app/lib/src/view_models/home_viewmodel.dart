@@ -112,12 +112,19 @@ class HomeViewModel extends _$HomeViewModel {
         },
       );
 
+      // 判断是否为取消
+      final resultState = service.isCancelled
+          ? GenerateState.cancelled
+          : (exitCode == 0 ? GenerateState.success : GenerateState.failed);
+
       state = state.copyWith(
         isGenerating: false,
         generateResult: GenerateResult(
-          state: exitCode == 0 ? GenerateState.success : GenerateState.failed,
+          state: resultState,
           output: buffer.toString(),
-          errorMessage: exitCode == 0 ? null : 'FFmpeg 退出码: $exitCode',
+          errorMessage: resultState == GenerateState.failed
+              ? 'FFmpeg 退出码: $exitCode'
+              : null,
         ),
       );
     } catch (e) {

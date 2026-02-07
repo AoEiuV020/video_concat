@@ -8,6 +8,7 @@ enum GenerateState {
   running,
   success,
   failed,
+  cancelled,
 }
 
 /// 生成结果
