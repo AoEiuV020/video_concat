@@ -31,3 +31,9 @@ mvvm架构，
 1. md/规划/通用/架构设计.md 接口命名Base挺糟糕的，更新 ln/AI/skills/mvvm-guide/SKILL.md vmBase是给基类用的，用于大型vm拆分时的基类，这不是接口， 想办法描述清楚，
 
 1. 权限配置，
+
+1. 默认目录，
+1. mac沙盒，ffmpeg执行权限怎么处理好，具体怎么做，
+
+1. 没用， 不必要的话删了，
+1. 我听说有个“com.apple.security.files.user-selected.executable“，有用没？
