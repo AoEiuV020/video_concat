@@ -10,23 +10,20 @@ Create GitHub Actions workflow for Flutter app builds.
 ## Usage
 
 ```bash
-python scripts/create_workflow.py <app_path> [--name <filename>]
+dart run <skill_path>/scripts/create_workflow.dart <app_path> [--name <filename>]
 ```
 
 ## Examples
 
 ```bash
-# Create workflow for app
-python scripts/create_workflow.py apps/my_app
-
-# Custom workflow filename
-python scripts/create_workflow.py apps/my_app --name ci.yml
+dart run <skill_path>/scripts/create_workflow.dart apps/my_app
+dart run <skill_path>/scripts/create_workflow.dart apps/my_app --name ci
 ```
 
 ## Options
 
 - `app_path`: App module path (e.g., `apps/my_app`)
-- `--name`: Workflow filename (default: `main.yml`)
+- `--name`: Workflow filename (default: `main`)
 - `--workspace`: Workspace root path (auto-detected)
 
 ## Template Features
