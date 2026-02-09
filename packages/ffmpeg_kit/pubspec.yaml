@@ -2,6 +2,7 @@ name: ffmpeg_kit
 description: A starting point for Dart libraries or applications.
 version: 1.0.0
 repository: https://github.com/AoEiuV020/video_concat/tree/main/packages/ffmpeg_kit
+publish_to: none
 
 environment:
   sdk: ^3.10.7
