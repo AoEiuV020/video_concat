@@ -10,6 +10,7 @@ class VideoListTile extends StatelessWidget {
   final VoidCallback onDelete;
   final VoidCallback? onTap;
   final bool isOutOfOrder;
+  final bool isIncompatible;
 
   const VideoListTile({
     super.key,
@@ -18,6 +19,7 @@ class VideoListTile extends StatelessWidget {
     required this.onDelete,
     this.onTap,
     this.isOutOfOrder = false,
+    this.isIncompatible = false,
   });
 
   @override
@@ -38,10 +40,20 @@ class VideoListTile extends StatelessWidget {
         overflow: TextOverflow.ellipsis,
         style: Theme.of(context).textTheme.bodySmall,
       ),
-      trailing: IconButton(
-        icon: const Icon(Icons.delete_outline),
-        onPressed: onDelete,
-        tooltip: '删除',
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (isIncompatible)
+            const Tooltip(
+              message: '编码参数与第一个视频不一致',
+              child: Icon(Icons.warning, color: Colors.red, size: 20),
+            ),
+          IconButton(
+            icon: const Icon(Icons.delete_outline),
+            onPressed: onDelete,
+            tooltip: '删除',
+          ),
+        ],
       ),
     );
   }

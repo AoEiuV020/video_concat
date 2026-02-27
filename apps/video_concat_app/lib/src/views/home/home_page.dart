@@ -80,6 +80,8 @@ class HomePage extends ConsumerWidget {
                   state.videoItems[index - 1].fileName,
                 ) <
                 0;
+        final isIncompatible =
+            state.videoCompatibility[item.id] == false;
         return VideoListTile(
           key: ValueKey(item.id),
           item: item,
@@ -89,6 +91,7 @@ class HomePage extends ConsumerWidget {
             '/video-info?path=${Uri.encodeComponent(item.filePath)}',
           ),
           isOutOfOrder: isOutOfOrder,
+          isIncompatible: isIncompatible,
         );
       },
     );
