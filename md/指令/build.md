@@ -13,3 +13,6 @@
 1. 我说”通用“的才能放在/lib， 只和build相关的当然不算通用了，
 
 1. 禁止对`md/指令`进行任何操作， 有变化就一起提交，禁止查看内容，这点写进 AGENTS.md 一行说清楚，
+
+1. 新增了 .claude/skills/git-commit/SKILL.md ，查看并注意后续遵守，
+1. 然后删除 AGENTS.md:4 
