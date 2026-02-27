@@ -8,12 +8,14 @@ class VideoListTile extends StatelessWidget {
   final VideoItem item;
   final int index;
   final VoidCallback onDelete;
+  final bool isOutOfOrder;
 
   const VideoListTile({
     super.key,
     required this.item,
     required this.index,
     required this.onDelete,
+    this.isOutOfOrder = false,
   });
 
   @override
@@ -26,6 +28,7 @@ class VideoListTile extends StatelessWidget {
       title: Text(
         item.fileName,
         overflow: TextOverflow.ellipsis,
+        style: isOutOfOrder ? const TextStyle(color: Colors.red) : null,
       ),
       subtitle: Text(
         '${formatFileSize(item.fileSize)} • ${item.filePath}',

@@ -75,11 +75,17 @@ class HomePage extends ConsumerWidget {
       buildDefaultDragHandles: false,
       itemBuilder: (context, index) {
         final item = state.videoItems[index];
+        final isOutOfOrder = index > 0 &&
+            item.fileName.compareTo(
+                  state.videoItems[index - 1].fileName,
+                ) <
+                0;
         return VideoListTile(
           key: ValueKey(item.id),
           item: item,
           index: index,
           onDelete: () => vm.removeVideo(item.id),
+          isOutOfOrder: isOutOfOrder,
         );
       },
     );
