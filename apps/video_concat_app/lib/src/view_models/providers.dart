@@ -17,6 +17,12 @@ FFmpegService ffmpegService(Ref ref) {
   return FFmpegService();
 }
 
+/// FFprobe 服务
+@Riverpod(keepAlive: true)
+FFprobeService ffprobeService(Ref ref) {
+  return FFprobeService();
+}
+
 /// 视频合并服务
 @Riverpod(keepAlive: true)
 VideoConcatService videoConcatService(Ref ref) {

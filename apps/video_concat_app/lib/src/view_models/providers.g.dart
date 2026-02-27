@@ -107,6 +107,52 @@ final class FfmpegServiceProvider
 
 String _$ffmpegServiceHash() => r'9ebd72b866e2cb147204a6fdb2dca53acae5dab2';
 
+/// FFprobe 服务
+
+@ProviderFor(ffprobeService)
+final ffprobeServiceProvider = FfprobeServiceProvider._();
+
+/// FFprobe 服务
+
+final class FfprobeServiceProvider
+    extends $FunctionalProvider<FFprobeService, FFprobeService, FFprobeService>
+    with $Provider<FFprobeService> {
+  /// FFprobe 服务
+  FfprobeServiceProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'ffprobeServiceProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$ffprobeServiceHash();
+
+  @$internal
+  @override
+  $ProviderElement<FFprobeService> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  FFprobeService create(Ref ref) {
+    return ffprobeService(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(FFprobeService value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<FFprobeService>(value),
+    );
+  }
+}
+
+String _$ffprobeServiceHash() => r'dec624f3dc1ffaac89ba62447fbaa98696e61f09';
+
 /// 视频合并服务
 
 @ProviderFor(videoConcatService)

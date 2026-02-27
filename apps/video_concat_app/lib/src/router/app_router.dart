@@ -4,6 +4,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../views/home/home_page.dart';
 import '../views/settings/settings_page.dart';
+import '../views/video_info/video_info_page.dart';
 
 part 'app_router.g.dart';
 
@@ -20,6 +21,13 @@ GoRouter appRouter(Ref ref) {
       GoRoute(
         path: '/settings',
         builder: (context, state) => const SettingsPage(),
+      ),
+      GoRoute(
+        path: '/video-info',
+        builder: (context, state) {
+          final filePath = state.uri.queryParameters['path'] ?? '';
+          return VideoInfoPage(filePath: filePath);
+        },
       ),
     ],
     errorBuilder: (context, state) => Scaffold(
