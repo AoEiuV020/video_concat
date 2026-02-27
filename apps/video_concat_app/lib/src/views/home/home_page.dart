@@ -85,6 +85,9 @@ class HomePage extends ConsumerWidget {
           item: item,
           index: index,
           onDelete: () => vm.removeVideo(item.id),
+          onTap: () => context.push(
+            '/video-info?path=${Uri.encodeComponent(item.filePath)}',
+          ),
           isOutOfOrder: isOutOfOrder,
         );
       },

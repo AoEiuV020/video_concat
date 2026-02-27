@@ -8,6 +8,7 @@ class VideoListTile extends StatelessWidget {
   final VideoItem item;
   final int index;
   final VoidCallback onDelete;
+  final VoidCallback? onTap;
   final bool isOutOfOrder;
 
   const VideoListTile({
@@ -15,12 +16,14 @@ class VideoListTile extends StatelessWidget {
     required this.item,
     required this.index,
     required this.onDelete,
+    this.onTap,
     this.isOutOfOrder = false,
   });
 
   @override
   Widget build(BuildContext context) {
     return ListTile(
+      onTap: onTap,
       leading: ReorderableDragStartListener(
         index: index,
         child: const Icon(Icons.drag_indicator),
