@@ -99,3 +99,5 @@ if "x%a%" neq "x" (
 1. 为什么你依然把计划创建到了会话目录，没有遵守docs-style skill， 调整 ~/.claude/skills/docs-style/SKILL.md:3 务必确保你自己能在创建计划时遵守，
 
 1. AGENTS.md 添加一行，提交代码前需要运行编译`flutter build macos --build`
+
+1. AGENTS.md 中的星号太多了， 没用，都删了，
