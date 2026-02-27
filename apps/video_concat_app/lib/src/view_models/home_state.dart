@@ -1,3 +1,4 @@
+import 'package:ffmpeg_kit/ffmpeg_kit.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../models/models.dart';
@@ -13,5 +14,7 @@ abstract class HomeState with _$HomeState {
     OutputConfig outputConfig,
     GenerateResult? generateResult,
     @Default(false) bool isGenerating,
+    ProbeResult? referenceResult,
+    @Default({}) Map<String, bool> videoCompatibility,
   }) = _HomeState;
 }
