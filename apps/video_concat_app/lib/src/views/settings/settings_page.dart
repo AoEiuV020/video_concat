@@ -75,11 +75,17 @@ class SettingsPage extends ConsumerWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    state.isFFmpegValid
-                        ? 'FFmpeg 可用'
-                        : 'FFmpeg 不可用，请检查路径',
+                    state.isValidating
+                        ? '正在检查...'
+                        : state.isFFmpegValid
+                            ? 'FFmpeg 可用'
+                            : 'FFmpeg 不可用，请检查路径',
                     style: TextStyle(
-                      color: state.isFFmpegValid ? Colors.green : Colors.red,
+                      color: state.isValidating
+                          ? Colors.grey
+                          : state.isFFmpegValid
+                              ? Colors.green
+                              : Colors.red,
                       fontSize: 12,
                     ),
                   ),
