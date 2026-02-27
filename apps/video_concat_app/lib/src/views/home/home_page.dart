@@ -24,6 +24,11 @@ class HomePage extends ConsumerWidget {
         title: const Text('视频合并'),
         actions: [
           IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: state.isGenerating ? null : () => vm.reset(),
+            tooltip: '新任务',
+          ),
+          IconButton(
             icon: const Icon(Icons.settings),
             onPressed: () => context.push('/settings'),
           ),

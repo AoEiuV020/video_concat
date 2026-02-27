@@ -154,4 +154,10 @@ class HomeViewModel extends _$HomeViewModel {
   void clearResult() {
     state = state.copyWith(generateResult: null);
   }
+
+  /// 重置所有状态，开始新任务
+  void reset() {
+    state = const HomeState();
+    _loadPreferences();
+  }
 }
