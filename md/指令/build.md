@@ -16,3 +16,7 @@
 
 1. 新增了 .claude/skills/git-commit/SKILL.md ，查看并注意后续遵守，
 1. 然后删除 AGENTS.md:4 
+
+1. .claude/skills/flutter-build/SKILL.md:13 skill禁止强调skill所在路径，用尖括号意思一下， 参考template-sync，
+
+1. 不是这样啊， 你到底参考没有， 我让你别写skill路径， 不是别写script路径，

@@ -10,13 +10,13 @@ description: 编译测试 Flutter 应用。修改代码确认提交前执行，�
 ## 用法
 
 ```bash
-dart run .claude/skills/flutter-build/scripts/build.dart <app模块相对路径>
+dart run <skill_path>/scripts/build.dart <app模块相对路径>
 ```
 
 ## 示例
 
 ```bash
-dart run .claude/skills/flutter-build/scripts/build.dart apps/video_concat_app
+dart run <skill_path>/scripts/build.dart apps/video_concat_app
 ```
 
 ## 行为
