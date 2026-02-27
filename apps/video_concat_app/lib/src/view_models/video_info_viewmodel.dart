@@ -5,14 +5,34 @@ import 'providers.dart';
 
 part 'video_info_viewmodel.g.dart';
 
-/// 视频信息 ViewModel
-@riverpod
-Future<ProbeResult> videoInfo(Ref ref, String filePath) async {
-  final ffprobe = ref.read(ffprobeServiceProvider);
+/// 视频信息页数据
+class VideoInfoData {
+  final ProbeResult result;
+  final ProbeCompareResult? compareResult;
 
-  // 从 ffmpeg 路径推导 ffprobe 路径
+  const VideoInfoData({required this.result, this.compareResult});
+}
+
+/// 视频信息 ViewModel
+///
+/// [refPath] 不为空时，与参考视频对比并返回差异。
+@riverpod
+Future<VideoInfoData> videoInfo(
+  Ref ref,
+  String filePath, {
+  String? refPath,
+}) async {
+  final ffprobe = ref.read(ffprobeServiceProvider);
   final ffmpeg = ref.read(ffmpegServiceProvider);
   ffprobe.deriveFromFFmpegPath(ffmpeg.ffmpegPath);
 
-  return ffprobe.probe(filePath);
+  final result = await ffprobe.probe(filePath);
+
+  if (refPath == null || refPath.isEmpty) {
+    return VideoInfoData(result: result);
+  }
+
+  final refResult = await ffprobe.probe(refPath);
+  final compareResult = ProbeComparer().compare(refResult, result);
+  return VideoInfoData(result: result, compareResult: compareResult);
 }

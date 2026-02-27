@@ -82,14 +82,21 @@ class HomePage extends ConsumerWidget {
                 0;
         final isIncompatible =
             state.videoCompatibility[item.id] == false;
+        final refPath = isIncompatible && state.videoItems.isNotEmpty
+            ? state.videoItems.first.filePath
+            : null;
         return VideoListTile(
           key: ValueKey(item.id),
           item: item,
           index: index,
           onDelete: () => vm.removeVideo(item.id),
-          onTap: () => context.push(
-            '/video-info?path=${Uri.encodeComponent(item.filePath)}',
-          ),
+          onTap: () {
+            var uri = '/video-info?path=${Uri.encodeComponent(item.filePath)}';
+            if (refPath != null) {
+              uri += '&ref=${Uri.encodeComponent(refPath)}';
+            }
+            context.push(uri);
+          },
           isOutOfOrder: isOutOfOrder,
           isIncompatible: isIncompatible,
         );

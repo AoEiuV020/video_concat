@@ -26,7 +26,8 @@ GoRouter appRouter(Ref ref) {
         path: '/video-info',
         builder: (context, state) {
           final filePath = state.uri.queryParameters['path'] ?? '';
-          return VideoInfoPage(filePath: filePath);
+          final refPath = state.uri.queryParameters['ref'];
+          return VideoInfoPage(filePath: filePath, refPath: refPath);
         },
       ),
     ],
