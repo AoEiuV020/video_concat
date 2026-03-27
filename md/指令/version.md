@@ -12,3 +12,26 @@
 1. 没听懂吗？我是说一条完整命令，
 
 1. 怎么又有文件漏提交了，
+
+1. 压根不需要检查，git-commit skill就说了要`add .`你为什么没有照做，
+
+1. 我问你为什么，
+
+1. 你提交之前查看skill了没有， 为什么，
+
+1. 不对， 项目内的git-commit应该删除，只使用家目录的`.claude/skills/git-commit/SKILL.md`
+1. 现在又有指令残留了，
+
+1. 禁止自动push，
+1. 而且你又开始反复cd了，
+
+1. shell经验保存到~/.copilot/copilot-instructions.md 核心就是复用shell，禁止多余的命令，
+1. git push经验保存到~/.claude/skills/git-commit/SKILL.md
+
+1. 你这说的不矛盾吗？到底哪些情况会污染work dir？
+
+1. 我没明白你这`cd sub && cmd`是在干嘛， 又为什么禁止？
+
+1. 你这种情况完全应该开一个新的shell不就不会污染了？
+
+1. 又有新指令提交合并一下，
