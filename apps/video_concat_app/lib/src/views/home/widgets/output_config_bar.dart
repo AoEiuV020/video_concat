@@ -71,8 +71,36 @@ class OutputConfigBar extends StatelessWidget {
                   ),
             ),
           ],
+          const SizedBox(width: 8),
+          _buildExportOptionsToggle(),
         ],
       ),
+    );
+  }
+
+  Widget _buildExportOptionsToggle() {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Checkbox(
+          value: state.exportOptions.showOptions,
+          onChanged: state.isGenerating
+              ? null
+              : (v) => vm.updateExportOptions(
+                    state.exportOptions.copyWith(showOptions: v ?? false),
+                  ),
+        ),
+        GestureDetector(
+          onTap: state.isGenerating
+              ? null
+              : () => vm.updateExportOptions(
+                    state.exportOptions.copyWith(
+                      showOptions: !state.exportOptions.showOptions,
+                    ),
+                  ),
+          child: const Text('导出选项'),
+        ),
+      ],
     );
   }
 }

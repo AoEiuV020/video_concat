@@ -12,6 +12,7 @@ abstract class HomeState with _$HomeState {
     @Default([]) List<VideoItem> videoItems,
     @Default(OutputConfig(baseName: '', extension: 'mp4'))
     OutputConfig outputConfig,
+    @Default(ExportOptions()) ExportOptions exportOptions,
     GenerateResult? generateResult,
     @Default(false) bool isGenerating,
     ProbeResult? referenceResult,

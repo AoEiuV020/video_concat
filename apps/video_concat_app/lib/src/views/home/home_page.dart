@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../view_models/home_state.dart';
 import '../../view_models/home_viewmodel.dart';
+import 'widgets/export_options_panel.dart';
 import 'widgets/generate_output_panel.dart';
 import 'widgets/output_config_bar.dart';
 import 'widgets/video_list_tile.dart';
@@ -43,6 +44,12 @@ class HomePage extends ConsumerWidget {
           children: [
             Expanded(child: _buildVideoList(state, vm)),
             OutputConfigBar(state: state, vm: vm),
+            ExportOptionsPanel(
+              options: state.exportOptions,
+              vm: vm,
+              outputExtension: state.outputConfig.extension,
+              isGenerating: state.isGenerating,
+            ),
             _buildActionButtons(context, state, vm),
             if (state.generateResult != null)
               GenerateOutputPanel(result: state.generateResult!),

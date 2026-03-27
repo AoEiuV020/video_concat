@@ -4,6 +4,7 @@ import 'package:ffmpeg_kit/ffmpeg_kit.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../models/models.dart';
+import '../utils/chapter_builder.dart';
 import 'home_state.dart';
 import 'providers.dart';
 
@@ -24,8 +25,10 @@ class HomeViewModel extends _$HomeViewModel {
   Future<void> _loadPreferences() async {
     final prefs = ref.read(preferencesRepositoryProvider);
     final ext = await prefs.getLastExtension();
+    final exportOptions = await prefs.loadExportOptions();
     state = state.copyWith(
       outputConfig: state.outputConfig.copyWith(extension: ext),
+      exportOptions: exportOptions,
     );
   }
 
@@ -89,6 +92,33 @@ class HomeViewModel extends _$HomeViewModel {
       outputConfig: state.outputConfig.copyWith(extension: extension),
     );
     await ref.read(preferencesRepositoryProvider).saveLastExtension(extension);
+
+    // 切换到不支持快速启动的格式时自动关闭
+    final isMp4Like = extension == 'mp4' || extension == 'mov';
+    if (!isMp4Like && state.exportOptions.fastStart) {
+      state = state.copyWith(
+        exportOptions: state.exportOptions.copyWith(fastStart: false),
+      );
+    }
+  }
+
+  /// 更新导出选项
+  ///
+  /// 自动处理互斥：清除元数据与拼接点章节不能同时启用。
+  void updateExportOptions(ExportOptions options) {
+    final prev = state.exportOptions;
+    var resolved = options;
+
+    // 清除元数据(-map_metadata -1)与章节注入(-map_metadata 1)互斥
+    if (options.stripMetadata && options.addChapters) {
+      if (!prev.stripMetadata && options.stripMetadata) {
+        resolved = resolved.copyWith(addChapters: false);
+      } else if (!prev.addChapters && options.addChapters) {
+        resolved = resolved.copyWith(stripMetadata: false);
+      }
+    }
+
+    state = state.copyWith(exportOptions: resolved);
   }
 
   OutputConfig _updateBaseName(List<VideoItem> items, OutputConfig config) {
@@ -102,6 +132,11 @@ class HomeViewModel extends _$HomeViewModel {
 
   /// 开始生成
   Future<void> startGenerate(String outputPath) async {
+    // 保存导出选项（remember 开关始终保存）
+    await ref
+        .read(preferencesRepositoryProvider)
+        .saveExportOptions(state.exportOptions);
+
     state = state.copyWith(
       isGenerating: true,
       generateResult: const GenerateResult(
@@ -112,11 +147,27 @@ class HomeViewModel extends _$HomeViewModel {
 
     final service = ref.read(videoConcatServiceProvider);
     final buffer = StringBuffer();
+    final extraArgs = state.exportOptions.toFFmpegArgs(
+      outputExtension: state.outputConfig.extension,
+    );
+    final preInputArgs = state.exportOptions.toPreInputArgs();
 
     try {
+      // 构建章节信息（需要 ffprobe 获取每个视频时长）
+      List<ChapterInfo>? chapters;
+      if (state.exportOptions.addChapters) {
+        chapters = await buildChapters(
+          ffprobe: _getFfprobeService(),
+          items: state.videoItems,
+        );
+      }
+
       final exitCode = await service.concat(
         inputPaths: state.videoItems.map((v) => v.filePath).toList(),
         outputPath: outputPath,
+        preInputArguments: preInputArgs,
+        extraArguments: extraArgs,
+        chapters: chapters,
         onOutput: (output) {
           buffer.write(output);
           state = state.copyWith(
@@ -175,50 +226,33 @@ class HomeViewModel extends _$HomeViewModel {
   /// 检查第一个视频是否变化，触发探测。
   void _checkAndProbe() {
     final items = state.videoItems;
-
     if (items.isEmpty) {
       _referenceFilePath = null;
-      state = state.copyWith(
-        referenceResult: null,
-        videoCompatibility: {},
-      );
+      state = state.copyWith(referenceResult: null, videoCompatibility: {});
       return;
     }
 
     final firstPath = items.first.filePath;
-
     if (firstPath != _referenceFilePath) {
-      // 第一个视频变化，全部重新探测
       _referenceFilePath = firstPath;
-      state = state.copyWith(
-        referenceResult: null,
-        videoCompatibility: {},
-      );
+      state = state.copyWith(referenceResult: null, videoCompatibility: {});
       _probeAll(firstPath, items);
     } else {
-      // 第一个视频没变，只探测未检查的视频
       _probeNewItems(items);
     }
   }
 
   /// 探测所有视频。
   Future<void> _probeAll(String refPath, List<VideoItem> items) async {
-    final ffprobe = _getFfprobeService();
-
-    // 先探测标准视频
     ProbeResult refResult;
     try {
-      refResult = await ffprobe.probe(refPath);
+      refResult = await _getFfprobeService().probe(refPath);
     } catch (_) {
-      return; // 标准视频探测失败则跳过
+      return;
     }
-
-    // 探测期间第一个视频可能已变化
     if (_referenceFilePath != refPath) return;
-
     state = state.copyWith(referenceResult: refResult);
 
-    // 逐个对比其余视频
     for (final item in items.skip(1)) {
       await _probeAndCompare(item, refResult);
       if (_referenceFilePath != refPath) return;
@@ -242,27 +276,16 @@ class HomeViewModel extends _$HomeViewModel {
     VideoItem item,
     ProbeResult refResult,
   ) async {
-    final ffprobe = _getFfprobeService();
-
+    bool compatible;
     try {
-      final result = await ffprobe.probe(item.filePath);
-      final compareResult = _comparer.compare(refResult, result);
-
-      state = state.copyWith(
-        videoCompatibility: {
-          ...state.videoCompatibility,
-          item.id: compareResult.isCompatible,
-        },
-      );
+      final result = await _getFfprobeService().probe(item.filePath);
+      compatible = _comparer.compare(refResult, result).isCompatible;
     } catch (_) {
-      // 探测失败标记为不兼容
-      state = state.copyWith(
-        videoCompatibility: {
-          ...state.videoCompatibility,
-          item.id: false,
-        },
-      );
+      compatible = false;
     }
+    state = state.copyWith(
+      videoCompatibility: {...state.videoCompatibility, item.id: compatible},
+    );
   }
 
   FFprobeService _getFfprobeService() {
