@@ -1,35 +1,37 @@
 ---
 name: init-melos
-description: Install and initialize Melos CLI for monorepo management. Use when user needs melos, wants to run melos bootstrap, or gets "melos: command not found". Triggers on "install melos", "init melos", "melos not found", "setup melos".
+description: "Use when melos command is not found or workspace needs initialization. Triggers on 'melos not found', 'install melos', 'melos bootstrap'."
 ---
 
-# 安装 Melos CLI
+# Melos CLI
 
-确保 Melos CLI 已安装并可用。
+Dart/Flutter monorepo 管理工具，用于管理多包工作区的依赖、脚本和发布。
 
-## 安装步骤
+## 安装
 
 ```bash
-# 1. 检查是否已安装
-command -v melos
-
-# 2. 如果未安装，执行安装
 dart pub global activate melos
 
-# 3. 确保 PATH 包含 pub-cache/bin
-export PATH="$PATH:$HOME/.pub-cache/bin"
-```
-
-## 验证
-
-```bash
+# 验证
 melos --version
 ```
 
+如果提示找不到命令，确保 `$HOME/.pub-cache/bin` 在 PATH 中。
+
 ## 初始化工作区
 
-安装完成后，在工作区根目录执行：
-
 ```bash
+# 解析依赖并链接本地包
 melos bootstrap
 ```
+
+## 常用命令
+
+| 命令 | 说明 |
+|------|------|
+| `melos bootstrap` | 安装依赖并链接本地包 |
+| `melos run <脚本名>` | 执行 pubspec.yaml 中定义的 melos 脚本 |
+| `melos list` | 列出工作区内所有包 |
+| `melos exec -- <命令>` | 在所有包中执行命令 |
+
+具体脚本定义见根目录 `pubspec.yaml` 的 `melos.scripts` 部分。详细用法参考 `melos-guide` skill。
