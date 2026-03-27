@@ -1,4 +1,4 @@
-package com.example.video_concat_app
+package com.aoeiuv020.video_concat_app
 
 import io.flutter.embedding.android.FlutterActivity
 

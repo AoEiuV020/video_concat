@@ -8,7 +8,7 @@
 PRODUCT_NAME = video_concat_app
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.example.videoConcatApp
+PRODUCT_BUNDLE_IDENTIFIER = com.aoeiuv020.videoConcatApp
 
 // The copyright displayed in application information
-PRODUCT_COPYRIGHT = Copyright © 2026 com.example. All rights reserved.
+PRODUCT_COPYRIGHT = Copyright © 2026 com.aoeiuv020. All rights reserved.
