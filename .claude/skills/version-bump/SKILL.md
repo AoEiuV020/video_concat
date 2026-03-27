@@ -12,13 +12,10 @@ description: 更新版本号和 CHANGELOG.md。当用户要求更新版本、发
 ### 1. 获取 CHANGELOG.md 上次修改以来的 git log
 
 ```bash
-git --no-pager log --format=" - %s" $(git --no-pager log -1 --format=%H -- CHANGELOG.md)..HEAD
+# 需拆开执行：$() 嵌套命令会被安全过滤器拦截
+# readlink 解析 symlink，非 symlink 时 fallback 原路径
+git --no-pager log --format=" - %s" $(git --no-pager log -1 --format=%H -- $(readlink CHANGELOG.md || echo CHANGELOG.md))..HEAD
 ```
-
-此命令：
-- 找到 CHANGELOG.md 最后一次修改的 commit
-- 列出从那之后到 HEAD 的所有提交
-- 输出格式已适配 CHANGELOG.md 的列表格式
 
 ### 2. 确定新版本号
 
@@ -45,6 +42,8 @@ git --no-pager log --format=" - %s" $(git --no-pager log -1 --format=%H -- CHANG
 |------|----------|
 | `CHANGELOG.md` | 在顶部添加新版本段落 |
 | 应用 `pubspec.yaml` | 更新 `version` 字段，build number +1 |
+
+> `git add` 时使用步骤 1 中解析的真实路径，确保改动被正确暂存。
 
 ### 5. 提交并整理
 
