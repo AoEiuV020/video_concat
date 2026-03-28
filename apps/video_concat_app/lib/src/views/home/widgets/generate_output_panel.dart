@@ -72,9 +72,9 @@ class GenerateOutputPanel extends StatelessWidget {
               ),
             ),
           Container(
-            height: 150,
+            height: 200,
             width: double.infinity,
-            margin: const EdgeInsets.all(12),
+            margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
               color: Colors.black87,
