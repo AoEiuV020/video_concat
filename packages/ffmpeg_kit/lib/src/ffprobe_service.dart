@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'log.dart';
 import 'models/probe_result.dart';
 import 'utils/timestamp.dart';
 
@@ -34,6 +35,7 @@ class FFprobeService {
   /// [filePath] 文件路径
   /// 返回解析后的 [ProbeResult]
   Future<ProbeResult> probe(String filePath) async {
+    logger.d('probe file=$filePath');
     final result = await Process.run(
       _ffprobePath,
       [
@@ -48,11 +50,15 @@ class FFprobeService {
 
     if (result.exitCode != 0) {
       final error = result.stderr.toString().trim();
+      logger.e('probe 失败 exitCode=${result.exitCode} error=$error');
       throw Exception('ffprobe 执行失败: $error');
     }
 
     final json = jsonDecode(result.stdout as String) as Map<String, dynamic>;
-    return ProbeResult.fromJson(json);
+    final probeResult = ProbeResult.fromJson(json);
+    logger.d('probe 完成 streams=${probeResult.streams.length} '
+        'duration=${probeResult.format.duration}');
+    return probeResult;
   }
 
   /// 构建关键帧探测命令参数。
@@ -109,6 +115,9 @@ class FFprobeService {
       endUs: endUs,
     );
 
+    logger.d('findKeyframes file=$filePath '
+        'window=[${startUs ?? "null"}, ${endUs ?? "null"}]');
+
     final result = await Process.run(
       _ffprobePath,
       args,
@@ -117,9 +126,13 @@ class FFprobeService {
 
     if (result.exitCode != 0) {
       final error = result.stderr.toString().trim();
+      logger.e('findKeyframes 失败 exitCode=${result.exitCode} '
+          'error=$error');
       throw Exception('ffprobe 关键帧探测失败: $error');
     }
 
-    return parseKeyframeOutput(result.stdout as String);
+    final keyframes = parseKeyframeOutput(result.stdout as String);
+    logger.d('findKeyframes 返回 ${keyframes.length} 个关键帧');
+    return keyframes;
   }
 }

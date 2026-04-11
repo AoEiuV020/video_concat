@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'ffmpeg_service.dart';
 import 'filelist_builder.dart';
+import 'log.dart';
 import 'models/concat_entry.dart';
 
 /// 章节信息
@@ -43,11 +44,13 @@ class VideoConcatService {
     List<ChapterInfo>? chapters,
     OutputCallback? onOutput,
   }) async {
+    logger.i('concat 开始 entries=${entries.length} output=$outputPath');
     final tempDir = await Directory.systemTemp.createTemp('video_concat_');
     final listFile = File('${tempDir.path}/filelist.txt');
 
     final content = buildFilelistContent(entries);
     await listFile.writeAsString(content);
+    logger.d('filelist:\n$content');
 
     final normalizedOutput = outputPath.replaceAll('\\', '/');
 
@@ -62,9 +65,10 @@ class VideoConcatService {
         final metadataFile = File('${tempDir.path}/chapters.txt');
         await metadataFile.writeAsString(_buildChapterMetadata(chapters));
         chapterArgs.addAll(['-i', metadataFile.path, '-map_metadata', '1']);
+        logger.d('章节数=${chapters.length}');
       }
 
-      return await _ffmpegService.execute(
+      final exitCode = await _ffmpegService.execute(
         arguments: [
           '-y',
           ...preInputArguments,
@@ -79,6 +83,8 @@ class VideoConcatService {
         ],
         onOutput: onOutput,
       );
+      logger.i('concat 完成 exitCode=$exitCode');
+      return exitCode;
     } finally {
       await tempDir.delete(recursive: true);
     }

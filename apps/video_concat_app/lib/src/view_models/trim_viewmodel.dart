@@ -1,6 +1,7 @@
 import 'package:ffmpeg_kit/ffmpeg_kit.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../log.dart';
 import '../utils/keyframe_cache.dart';
 import 'home_viewmodel.dart';
 import 'providers.dart';
@@ -33,9 +34,24 @@ class TrimViewModel extends _$TrimViewModel {
     // 加载已有的裁剪配置
     final existingSegments = item.trimConfig?.segments ?? [];
 
+    logger.d('build videoId=$videoId durationUs=$durationUs '
+        'filePath=${item.filePath} segments=${existingSegments.length}');
+
     // 异步初始化
     if (durationUs > 0) {
-      Future.microtask(() => _init());
+      Future.microtask(() async {
+        try {
+          await _init();
+        } catch (e, s) {
+          logger.e('_init 未捕获异常', error: e, stackTrace: s);
+          state = state.copyWith(
+            isLoading: false,
+            errorMessage: '初始化失败: $e',
+          );
+        }
+      });
+    } else {
+      logger.w('durationUs=0, 跳过初始化');
     }
 
     return TrimState(
@@ -49,9 +65,14 @@ class TrimViewModel extends _$TrimViewModel {
   }
 
   Future<void> _init() async {
+    logger.d('_init 开始');
+
     // 加载初始位置（0）附近的关键帧
     await _ensureCovered(0);
     final nearest = _cache.findNearest(0);
+
+    logger.d('_init nearest=$nearest '
+        '缓存关键帧数=${_cache.keyframes.length}');
 
     state = state.copyWith(
       isLoading: false,
@@ -61,13 +82,22 @@ class TrimViewModel extends _$TrimViewModel {
     // 加载首帧预览
     if (nearest != null) {
       await _loadPreview(nearest);
+    } else {
+      logger.w('_init 无关键帧，跳过预览');
     }
+
+    logger.d('_init 完成');
   }
 
   /// 滑块松开时调用
   Future<void> onSliderReleased(int positionUs) async {
+    logger.d('onSliderReleased positionUs=$positionUs');
+
     await _ensureCovered(positionUs);
     final nearest = _cache.findNearest(positionUs);
+
+    logger.d('onSliderReleased nearest=$nearest');
+
     if (nearest == null) return;
 
     state = state.copyWith(currentPositionUs: nearest);
@@ -135,25 +165,37 @@ class TrimViewModel extends _$TrimViewModel {
 
   /// 确保目标时间点已被关键帧缓存覆盖
   Future<void> _ensureCovered(int targetUs) async {
-    if (_cache.isCovered(targetUs)) return;
+    if (_cache.isCovered(targetUs)) {
+      logger.d('_ensureCovered targetUs=$targetUs 已缓存');
+      return;
+    }
 
     var windowUs = _defaultWindowUs;
     for (var retry = 0; retry < _maxRetries; retry++) {
       final startUs = (targetUs - windowUs).clamp(0, state.durationUs);
       final endUs = (targetUs + windowUs).clamp(0, state.durationUs);
 
+      logger.d('_ensureCovered retry=$retry '
+          'window=[$startUs, $endUs]');
+
       try {
         final ffprobe = _getFfprobeService();
+        logger.d('ffprobe路径=${ffprobe.ffprobePath}');
+
         final keyframes = await ffprobe.findKeyframes(
           state.filePath,
           startUs: startUs,
           endUs: endUs,
         );
 
+        logger.d('findKeyframes 返回 ${keyframes.length} 个关键帧'
+            '${keyframes.isNotEmpty ? ": ${keyframes.take(5)}" : ""}');
+
         _cache.addRange(startUs, endUs, keyframes);
 
         if (keyframes.isNotEmpty) return;
       } catch (e) {
+        logger.e('_ensureCovered 异常', error: e);
         state = state.copyWith(errorMessage: '关键帧探测失败: $e');
         return;
       }
@@ -161,23 +203,35 @@ class TrimViewModel extends _$TrimViewModel {
       // 窗口内无关键帧，翻倍重试
       windowUs = (windowUs * 2).clamp(0, _maxWindowUs);
     }
+    logger.w('_ensureCovered $_maxRetries次重试后仍无关键帧');
   }
 
   /// 加载预览图
   Future<void> _loadPreview(int timestampUs) async {
+    logger.d('_loadPreview timestampUs=$timestampUs');
     state = state.copyWith(isLoadingPreview: true);
     try {
       final ffmpeg = ref.read(ffmpegServiceProvider);
+      logger.d('ffmpeg路径=${ffmpeg.ffmpegPath}');
+
       final bytes = await ffmpeg.extractFrame(
         filePath: state.filePath,
         timestampUs: timestampUs,
       );
+
+      logger.d('extractFrame 返回 '
+          '${bytes != null ? "${bytes.length} bytes" : "null"}');
+
       state = state.copyWith(
         previewImage: bytes,
         isLoadingPreview: false,
       );
-    } catch (_) {
-      state = state.copyWith(isLoadingPreview: false);
+    } catch (e) {
+      logger.e('_loadPreview 异常', error: e);
+      state = state.copyWith(
+        isLoadingPreview: false,
+        errorMessage: '预览加载失败: $e',
+      );
     }
   }
 

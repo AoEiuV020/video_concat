@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'log.dart';
 import 'utils/timestamp.dart';
 
 /// FFmpeg 执行回调
@@ -29,8 +30,10 @@ class FFmpegService {
   Future<bool> validate() async {
     try {
       final result = await Process.run(_ffmpegPath, ['-version']);
+      logger.d('validate path=$_ffmpegPath exitCode=${result.exitCode}');
       return result.exitCode == 0;
-    } catch (_) {
+    } catch (e, s) {
+      logger.e('validate 失败 path=$_ffmpegPath', error: e, stackTrace: s);
       return false;
     }
   }
@@ -45,6 +48,7 @@ class FFmpegService {
     OutputCallback? onOutput,
   }) async {
     _cancelled = false;
+    logger.d('execute args=${arguments.join(" ")}');
     _currentProcess = await Process.start(_ffmpegPath, arguments);
 
     _currentProcess!.stdout.transform(utf8.decoder).listen((data) {
@@ -57,6 +61,7 @@ class FFmpegService {
 
     final exitCode = await _currentProcess!.exitCode;
     _currentProcess = null;
+    logger.d('execute 完成 exitCode=$exitCode');
     return exitCode;
   }
 
@@ -65,6 +70,7 @@ class FFmpegService {
     final process = _currentProcess;
     if (process != null) {
       _cancelled = true;
+      logger.i('cancel 中断当前进程');
 
       // 先尝试发送 'q' 让 FFmpeg 优雅退出
       try {
@@ -94,6 +100,7 @@ class FFmpegService {
     int maxWidth = 640,
   }) async {
     final timestampStr = formatTimestampUs(timestampUs);
+    logger.d('extractFrame file=$filePath ts=$timestampStr');
 
     final result = await Process.run(
       _ffmpegPath,
@@ -110,10 +117,18 @@ class FFmpegService {
       stdoutEncoding: null,
     );
 
-    if (result.exitCode != 0) return null;
+    if (result.exitCode != 0) {
+      logger.w('extractFrame 失败 exitCode=${result.exitCode} '
+          'stderr=${result.stderr}');
+      return null;
+    }
 
     final bytes = result.stdout as List<int>;
-    if (bytes.isEmpty) return null;
+    if (bytes.isEmpty) {
+      logger.w('extractFrame 返回空数据');
+      return null;
+    }
+    logger.d('extractFrame 成功 ${bytes.length} bytes');
     return Uint8List.fromList(bytes);
   }
 }
