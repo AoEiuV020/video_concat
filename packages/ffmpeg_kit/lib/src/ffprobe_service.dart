@@ -78,9 +78,8 @@ class FFprobeService {
       ],
       '-select_streams', 'v:0',
       '-skip_frame', 'nokey',
-      '-show_frames',
-      '-show_entries', 'frame=pkt_pts_time',
-      '-of', 'csv=p=0',
+      '-show_entries', 'frame=pts_time',
+      '-of', 'default=noprint_wrappers=1:nokey=1',
       filePath,
     ];
   }
