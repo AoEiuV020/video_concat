@@ -81,6 +81,10 @@ class StreamInfo {
   /// 是否为音频流。
   bool get isAudio => codecType == 'audio';
 
+  /// 是否为 HDR 内容（HDR10/HDR10+ 或 HLG）。
+  bool get isHdr =>
+      colorTransfer == 'smpte2084' || colorTransfer == 'arib-std-b67';
+
   /// 从 ffprobe JSON 的 streams[] 元素解析。
   factory StreamInfo.fromJson(Map<String, dynamic> json) {
     final tags = json['tags'] as Map<String, dynamic>? ?? {};

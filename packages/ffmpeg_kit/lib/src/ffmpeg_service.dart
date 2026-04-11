@@ -94,13 +94,22 @@ class FFmpegService {
   /// [filePath] 视频文件路径
   /// [timestampUs] 目标时间（微秒），应为关键帧时间
   /// [maxWidth] 预览图最大宽度（像素），高度按比例缩放
+  /// [isHdr] 是否为 HDR 内容，为 true 时自动应用 tone mapping
   Future<Uint8List?> extractFrame({
     required String filePath,
     required int timestampUs,
     int maxWidth = 640,
+    bool isHdr = false,
   }) async {
     final timestampStr = formatTimestampUs(timestampUs);
-    logger.d('extractFrame file=$filePath ts=$timestampStr');
+    logger.d('extractFrame file=$filePath ts=$timestampStr isHdr=$isHdr');
+
+    final vf = isHdr
+        ? 'zscale=t=linear:npl=100,format=gbrpf32le,'
+            'zscale=p=bt709,tonemap=tonemap=hable:desat=0,'
+            'zscale=t=bt709:m=bt709:r=tv,format=yuv420p,'
+            'scale=$maxWidth:-1'
+        : 'scale=$maxWidth:-1';
 
     final result = await Process.run(
       _ffmpegPath,
@@ -109,7 +118,7 @@ class FFmpegService {
         '-i', filePath,
         '-vframes', '1',
         '-q:v', '5',
-        '-vf', 'scale=$maxWidth:-1',
+        '-vf', vf,
         '-f', 'image2pipe',
         '-vcodec', 'mjpeg',
         'pipe:1',

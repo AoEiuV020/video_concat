@@ -17,6 +17,7 @@ class TrimViewModel extends _$TrimViewModel {
   late KeyframeCache _cache;
   Timer? _debounceTimer;
   bool _disposed = false;
+  bool _isHdr = false;
 
   /// 默认查询窗口（微秒）：10秒
   static const _defaultWindowUs = 10000000;
@@ -77,6 +78,21 @@ class TrimViewModel extends _$TrimViewModel {
 
   Future<void> _init() async {
     logger.d('_init 开始');
+
+    // 探测视频是否为 HDR
+    try {
+      final ffprobe = _getFfprobeService();
+      final probeResult = await ffprobe.probe(state.filePath);
+      if (_disposed) return;
+      final videoStream = probeResult.streams.where((s) => s.isVideo).firstOrNull;
+      if (videoStream != null) {
+        _isHdr = videoStream.isHdr;
+        logger.d('_init isHdr=$_isHdr '
+            'colorTransfer=${videoStream.colorTransfer}');
+      }
+    } catch (e) {
+      logger.w('_init HDR 探测失败: $e');
+    }
 
     // 加载初始位置（0）附近的关键帧
     await _ensureCovered(0);
@@ -366,6 +382,7 @@ class TrimViewModel extends _$TrimViewModel {
       final bytes = await ffmpeg.extractFrame(
         filePath: state.filePath,
         timestampUs: timestampUs,
+        isHdr: _isHdr,
       );
       if (_disposed) return;
 
