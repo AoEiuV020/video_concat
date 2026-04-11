@@ -130,6 +130,15 @@ class HomeViewModel extends _$HomeViewModel {
     return config.copyWith(baseName: '${nameWithoutExt}_merged');
   }
 
+  /// 设置视频的裁剪配置
+  void setTrimConfig(String videoId, TrimConfig? config) {
+    final items = state.videoItems.map((v) {
+      if (v.id == videoId) return v.copyWith(trimConfig: config);
+      return v;
+    }).toList();
+    state = state.copyWith(videoItems: items);
+  }
+
   /// 开始生成
   Future<void> startGenerate(String outputPath) async {
     // 保存导出选项（remember 开关始终保存）
@@ -162,8 +171,14 @@ class HomeViewModel extends _$HomeViewModel {
         );
       }
 
+      final entries = state.videoItems.map((v) => ConcatEntry(
+        filePath: v.filePath,
+        trimConfig: v.trimConfig,
+        durationUs: v.durationUs,
+      )).toList();
+
       final exitCode = await service.concat(
-        inputPaths: state.videoItems.map((v) => v.filePath).toList(),
+        entries: entries,
         outputPath: outputPath,
         preInputArguments: preInputArgs,
         extraArguments: extraArgs,
@@ -251,7 +266,20 @@ class HomeViewModel extends _$HomeViewModel {
       return;
     }
     if (_referenceFilePath != refPath) return;
-    state = state.copyWith(referenceResult: refResult);
+
+    // 更新首视频时长
+    final durationUs = (refResult.format.duration * 1000000).round();
+    final updatedItems = state.videoItems.map((v) {
+      if (v.filePath == refPath && v.durationUs == null) {
+        return v.copyWith(durationUs: durationUs);
+      }
+      return v;
+    }).toList();
+
+    state = state.copyWith(
+      referenceResult: refResult,
+      videoItems: updatedItems,
+    );
 
     for (final item in items.skip(1)) {
       await _probeAndCompare(item, refResult);
@@ -277,13 +305,28 @@ class HomeViewModel extends _$HomeViewModel {
     ProbeResult refResult,
   ) async {
     bool compatible;
+    int? durationUs;
     try {
       final result = await _getFfprobeService().probe(item.filePath);
       compatible = _comparer.compare(refResult, result).isCompatible;
+      durationUs = (result.format.duration * 1000000).round();
     } catch (_) {
       compatible = false;
     }
+
+    // 更新视频时长
+    var updatedItems = state.videoItems;
+    if (durationUs != null) {
+      updatedItems = updatedItems.map((v) {
+        if (v.id == item.id && v.durationUs == null) {
+          return v.copyWith(durationUs: durationUs);
+        }
+        return v;
+      }).toList();
+    }
+
     state = state.copyWith(
+      videoItems: updatedItems,
       videoCompatibility: {...state.videoCompatibility, item.id: compatible},
     );
   }
