@@ -128,7 +128,7 @@ class TrimViewModel extends _$TrimViewModel {
   /// 拖动中调用，300ms 防抖触发关键帧预览
   void onSliderDragging(int positionUs) {
     _debounceTimer?.cancel();
-    _debounceTimer = Timer(const Duration(milliseconds: 300), () {
+    _debounceTimer = Timer(const Duration(milliseconds: 100), () {
       _onDragDebounced(positionUs);
     });
   }
