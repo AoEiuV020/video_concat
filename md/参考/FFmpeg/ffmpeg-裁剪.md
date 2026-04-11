@@ -129,3 +129,18 @@ duration dur
 | `inpoint`/`outpoint` + `-movflags +faststart` | 正常兼容 |
 | 多文件混合裁剪 | 部分文件有 inpoint/outpoint、部分没有，完全合法 |
 | `duration` + `inpoint`/`outpoint` | 设置 `duration` 可覆盖自动计算的时长，确保时间戳连续性 |
+
+## 关键帧边界测试结果
+
+测试环境：120fps HEVC MKV，关键帧间隔约 2.083s。
+
+| 片段 | 帧数 |
+|------|------|
+| A: 0 → 2.083s | 251 |
+| B: 2.083s → 4.167s | 251 |
+| A+B 拼接 | 502 |
+| 直接 0 → 4.167s | 501 |
+
+**结论**：相邻片段在关键帧边界有 **1 帧重复**。`-c copy` 模式下，concat demuxer 的 outpoint 并非严格排他，边界关键帧同时出现在前后两段。
+
+**影响评估**：120fps 下 1 帧 = 8.3ms，肉眼不可见，暂不修复。
