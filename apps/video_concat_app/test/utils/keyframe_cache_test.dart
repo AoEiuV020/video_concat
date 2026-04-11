@@ -200,6 +200,79 @@ void main() {
     });
   });
 
+  group('KeyframeCache.isCoveredRange', () {
+    test('完全在同一区间内', () {
+      final cache = KeyframeCache(durationUs: 120000000);
+      cache.addRange(10000000, 50000000, _kfs([20000000, 30000000]));
+      expect(cache.isCoveredRange(15000000, 45000000), true);
+    });
+
+    test('跨越不连续区间', () {
+      final cache = KeyframeCache(durationUs: 120000000);
+      cache.addRange(10000000, 30000000, _kfs([20000000]));
+      cache.addRange(50000000, 70000000, _kfs([60000000]));
+      expect(cache.isCoveredRange(20000000, 60000000), false);
+    });
+
+    test('空缓存返回 false', () {
+      final cache = KeyframeCache(durationUs: 120000000);
+      expect(cache.isCoveredRange(0, 10000000), false);
+    });
+
+    test('区间边界精确匹配', () {
+      final cache = KeyframeCache(durationUs: 120000000);
+      cache.addRange(10000000, 30000000, []);
+      expect(cache.isCoveredRange(10000000, 30000000), true);
+    });
+  });
+
+  group('KeyframeCache.coveredRangeEnd', () {
+    test('返回包含位置的区间右端点', () {
+      final cache = KeyframeCache(durationUs: 120000000);
+      cache.addRange(10000000, 30000000, []);
+      expect(cache.coveredRangeEnd(20000000), 30000000);
+    });
+
+    test('位置在边界上', () {
+      final cache = KeyframeCache(durationUs: 120000000);
+      cache.addRange(10000000, 30000000, []);
+      expect(cache.coveredRangeEnd(30000000), 30000000);
+    });
+
+    test('位置不在任何区间内', () {
+      final cache = KeyframeCache(durationUs: 120000000);
+      cache.addRange(10000000, 30000000, []);
+      expect(cache.coveredRangeEnd(40000000), isNull);
+    });
+
+    test('合并后的区间返回正确端点', () {
+      final cache = KeyframeCache(durationUs: 120000000);
+      cache.addRange(10000000, 20000000, []);
+      cache.addRange(20500000, 40000000, []); // gap 0.5s < 1s → 合并
+      expect(cache.coveredRangeEnd(15000000), 40000000);
+    });
+  });
+
+  group('KeyframeCache.coveredRangeStart', () {
+    test('返回包含位置的区间左端点', () {
+      final cache = KeyframeCache(durationUs: 120000000);
+      cache.addRange(10000000, 30000000, []);
+      expect(cache.coveredRangeStart(20000000), 10000000);
+    });
+
+    test('位置在边界上', () {
+      final cache = KeyframeCache(durationUs: 120000000);
+      cache.addRange(10000000, 30000000, []);
+      expect(cache.coveredRangeStart(10000000), 10000000);
+    });
+
+    test('位置不在任何区间内', () {
+      final cache = KeyframeCache(durationUs: 120000000);
+      cache.addRange(10000000, 30000000, []);
+      expect(cache.coveredRangeStart(5000000), isNull);
+    });
+  });
+
   group('KeyframeCache 边界处理', () {
     test('start < 0 截断为 0', () {
       final cache = KeyframeCache(durationUs: 120000000);

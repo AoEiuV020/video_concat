@@ -144,10 +144,23 @@ class TrimViewModel extends _$TrimViewModel {
 
   /// 跳到上一个关键帧
   Future<void> goToPreviousKeyframe() async {
-    logger.d('goToPreviousKeyframe current=${state.currentPositionUs}');
+    final current = state.currentPositionUs;
+    logger.d('goToPreviousKeyframe current=$current');
     state = state.copyWith(isSnapping: true);
-    await _ensureCovered(state.currentPositionUs);
-    final prev = _cache.findPrevious(state.currentPositionUs);
+
+    await _ensureCovered(current);
+    var prev = _cache.findPrevious(current);
+
+    // 缓存中无前驱 或 前驱在不连续区间 → 向后探测
+    if (prev == null || !_cache.isCoveredRange(prev, current)) {
+      final rangeStart = _cache.coveredRangeStart(current);
+      if (rangeStart != null && rangeStart > 0) {
+        logger.d('goToPreviousKeyframe 向后探测 rangeStart=$rangeStart');
+        await _ensureCovered(rangeStart - 1);
+        prev = _cache.findPrevious(current);
+      }
+    }
+
     logger.d('goToPreviousKeyframe prev=$prev');
     if (prev != null) {
       state = state.copyWith(currentPositionUs: prev, isSnapping: false);
@@ -159,10 +172,23 @@ class TrimViewModel extends _$TrimViewModel {
 
   /// 跳到下一个关键帧
   Future<void> goToNextKeyframe() async {
-    logger.d('goToNextKeyframe current=${state.currentPositionUs}');
+    final current = state.currentPositionUs;
+    logger.d('goToNextKeyframe current=$current');
     state = state.copyWith(isSnapping: true);
-    await _ensureCovered(state.currentPositionUs);
-    final next = _cache.findNext(state.currentPositionUs);
+
+    await _ensureCovered(current);
+    var next = _cache.findNext(current);
+
+    // 缓存中无后继 或 后继在不连续区间 → 向前探测
+    if (next == null || !_cache.isCoveredRange(current, next)) {
+      final rangeEnd = _cache.coveredRangeEnd(current);
+      if (rangeEnd != null && rangeEnd < state.durationUs) {
+        logger.d('goToNextKeyframe 向前探测 rangeEnd=$rangeEnd');
+        await _ensureCovered(rangeEnd + 1);
+        next = _cache.findNext(current);
+      }
+    }
+
     logger.d('goToNextKeyframe next=$next');
     if (next != null) {
       state = state.copyWith(currentPositionUs: next, isSnapping: false);

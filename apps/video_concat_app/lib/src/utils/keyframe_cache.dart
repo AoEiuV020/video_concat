@@ -141,6 +141,30 @@ class KeyframeCache {
     return lo < _keyframes.length ? _keyframes[lo] : null;
   }
 
+  /// 判断 [startUs, endUs] 是否完全在同一个已查询区间内
+  bool isCoveredRange(int startUs, int endUs) {
+    for (final (start, end) in _searchedRanges) {
+      if (start <= startUs && end >= endUs) return true;
+    }
+    return false;
+  }
+
+  /// 返回包含 [positionUs] 的已查询区间的右端点，不存在返回 null
+  int? coveredRangeEnd(int positionUs) {
+    for (final (start, end) in _searchedRanges) {
+      if (start <= positionUs && end >= positionUs) return end;
+    }
+    return null;
+  }
+
+  /// 返回包含 [positionUs] 的已查询区间的左端点，不存在返回 null
+  int? coveredRangeStart(int positionUs) {
+    for (final (start, end) in _searchedRanges) {
+      if (start <= positionUs && end >= positionUs) return start;
+    }
+    return null;
+  }
+
   /// 查询关键帧的 DTS 时间戳（微秒），不存在返回 null
   int? getDts(int ptsUs) => _dtsMap[ptsUs];
 }
