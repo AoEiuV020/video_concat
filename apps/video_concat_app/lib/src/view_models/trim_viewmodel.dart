@@ -16,6 +16,7 @@ part 'trim_viewmodel.g.dart';
 class TrimViewModel extends _$TrimViewModel {
   late KeyframeCache _cache;
   Timer? _debounceTimer;
+  bool _disposed = false;
 
   /// 默认查询窗口（微秒）：10秒
   static const _defaultWindowUs = 10000000;
@@ -28,7 +29,9 @@ class TrimViewModel extends _$TrimViewModel {
 
   @override
   TrimState build(String videoId) {
+    _disposed = false;
     ref.onDispose(() {
+      _disposed = true;
       _debounceTimer?.cancel();
     });
 
@@ -77,6 +80,7 @@ class TrimViewModel extends _$TrimViewModel {
 
     // 加载初始位置（0）附近的关键帧
     await _ensureCovered(0);
+    if (_disposed) return;
     final nearest = _cache.findNearest(0);
 
     logger.d('_init nearest=$nearest '
@@ -108,12 +112,13 @@ class TrimViewModel extends _$TrimViewModel {
     );
 
     await _ensureCovered(positionUs);
+    if (_disposed) return;
     final nearest = _cache.findNearest(positionUs);
 
     logger.d('onSliderReleased nearest=$nearest');
 
     if (nearest == null) {
-      state = state.copyWith(isSnapping: false);
+      state = state.copyWith(isSnapping: false, draggingPositionUs: null);
       return;
     }
 
@@ -121,12 +126,14 @@ class TrimViewModel extends _$TrimViewModel {
     state = state.copyWith(
       currentPositionUs: nearest,
       isSnapping: false,
+      draggingPositionUs: null,
     );
     await _loadPreview(nearest);
   }
 
-  /// 拖动中调用，300ms 防抖触发关键帧预览
+  /// 拖动中调用，100ms 防抖触发关键帧预览
   void onSliderDragging(int positionUs) {
+    state = state.copyWith(draggingPositionUs: positionUs);
     _debounceTimer?.cancel();
     _debounceTimer = Timer(const Duration(milliseconds: 100), () {
       _onDragDebounced(positionUs);
@@ -136,6 +143,7 @@ class TrimViewModel extends _$TrimViewModel {
   Future<void> _onDragDebounced(int positionUs) async {
     logger.d('_onDragDebounced positionUs=$positionUs');
     await _ensureCovered(positionUs);
+    if (_disposed) return;
     final nearest = _cache.findNearest(positionUs);
     if (nearest != null) {
       await _loadPreview(nearest);
@@ -149,6 +157,7 @@ class TrimViewModel extends _$TrimViewModel {
     state = state.copyWith(isSnapping: true);
 
     await _ensureCovered(current);
+    if (_disposed) return;
     var prev = _cache.findPrevious(current);
 
     // 缓存中无前驱 或 前驱在不连续区间 → 向后探测
@@ -157,16 +166,21 @@ class TrimViewModel extends _$TrimViewModel {
       if (rangeStart != null && rangeStart > 0) {
         logger.d('goToPreviousKeyframe 向后探测 rangeStart=$rangeStart');
         await _ensureCovered(rangeStart - 1);
+        if (_disposed) return;
         prev = _cache.findPrevious(current);
       }
     }
 
     logger.d('goToPreviousKeyframe prev=$prev');
     if (prev != null) {
-      state = state.copyWith(currentPositionUs: prev, isSnapping: false);
+      state = state.copyWith(
+        currentPositionUs: prev,
+        isSnapping: false,
+        draggingPositionUs: null,
+      );
       await _loadPreview(prev);
     } else {
-      state = state.copyWith(isSnapping: false);
+      state = state.copyWith(isSnapping: false, draggingPositionUs: null);
     }
   }
 
@@ -177,6 +191,7 @@ class TrimViewModel extends _$TrimViewModel {
     state = state.copyWith(isSnapping: true);
 
     await _ensureCovered(current);
+    if (_disposed) return;
     var next = _cache.findNext(current);
 
     // 缓存中无后继 或 后继在不连续区间 → 向前探测
@@ -185,16 +200,21 @@ class TrimViewModel extends _$TrimViewModel {
       if (rangeEnd != null && rangeEnd < state.durationUs) {
         logger.d('goToNextKeyframe 向前探测 rangeEnd=$rangeEnd');
         await _ensureCovered(rangeEnd + 1);
+        if (_disposed) return;
         next = _cache.findNext(current);
       }
     }
 
     logger.d('goToNextKeyframe next=$next');
     if (next != null) {
-      state = state.copyWith(currentPositionUs: next, isSnapping: false);
+      state = state.copyWith(
+        currentPositionUs: next,
+        isSnapping: false,
+        draggingPositionUs: null,
+      );
       await _loadPreview(next);
     } else {
-      state = state.copyWith(isSnapping: false);
+      state = state.copyWith(isSnapping: false, draggingPositionUs: null);
     }
   }
 
@@ -336,6 +356,7 @@ class TrimViewModel extends _$TrimViewModel {
 
   /// 加载预览图
   Future<void> _loadPreview(int timestampUs) async {
+    if (_disposed) return;
     logger.d('_loadPreview timestampUs=$timestampUs');
     state = state.copyWith(isLoadingPreview: true);
     try {
@@ -346,6 +367,7 @@ class TrimViewModel extends _$TrimViewModel {
         filePath: state.filePath,
         timestampUs: timestampUs,
       );
+      if (_disposed) return;
 
       logger.d('extractFrame 返回 '
           '${bytes != null ? "${bytes.length} bytes" : "null"}');
@@ -355,6 +377,7 @@ class TrimViewModel extends _$TrimViewModel {
         isLoadingPreview: false,
       );
     } catch (e) {
+      if (_disposed) return;
       logger.e('_loadPreview 异常', error: e);
       state = state.copyWith(
         isLoadingPreview: false,

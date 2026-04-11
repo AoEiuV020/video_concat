@@ -2,12 +2,13 @@ import 'package:ffmpeg_kit/ffmpeg_kit.dart';
 import 'package:flutter/material.dart';
 
 /// 裁剪进度条
-class TrimSlider extends StatefulWidget {
+class TrimSlider extends StatelessWidget {
   final int durationUs;
   final int currentPositionUs;
+  final int? draggingPositionUs;
   final int inpointUs;
   final List<TrimSegment> segments;
-  final bool isSnapping;
+  final bool isBusy;
   final ValueChanged<int> onChanged;
   final ValueChanged<int> onChangeEnd;
   final VoidCallback onPrevious;
@@ -17,9 +18,10 @@ class TrimSlider extends StatefulWidget {
     super.key,
     required this.durationUs,
     required this.currentPositionUs,
+    this.draggingPositionUs,
     required this.inpointUs,
     required this.segments,
-    this.isSnapping = false,
+    this.isBusy = false,
     required this.onChanged,
     required this.onChangeEnd,
     required this.onPrevious,
@@ -27,34 +29,19 @@ class TrimSlider extends StatefulWidget {
   });
 
   @override
-  State<TrimSlider> createState() => _TrimSliderState();
-}
-
-class _TrimSliderState extends State<TrimSlider> {
-  double? _draggingValue;
-
-  @override
-  void didUpdateWidget(TrimSlider oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    // isSnapping 结束 → 清除拖动状态，让 slider 用 currentPositionUs
-    if (oldWidget.isSnapping && !widget.isSnapping) {
-      setState(() => _draggingValue = null);
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final max = widget.durationUs.toDouble();
+    final max = durationUs.toDouble();
     if (max <= 0) return const SizedBox.shrink();
 
-    final value = _draggingValue ?? widget.currentPositionUs.toDouble();
+    final value =
+        (draggingPositionUs ?? currentPositionUs).toDouble();
 
     return Column(
       children: [
         Row(
           children: [
             IconButton(
-              onPressed: widget.isSnapping ? null : widget.onPrevious,
+              onPressed: isBusy ? null : onPrevious,
               icon: const Icon(Icons.skip_previous),
               tooltip: '上一个关键帧',
             ),
@@ -63,18 +50,16 @@ class _TrimSliderState extends State<TrimSlider> {
                 value: value.clamp(0, max),
                 min: 0,
                 max: max,
-                onChanged: (v) {
-                  setState(() => _draggingValue = v);
-                  widget.onChanged(v.round());
-                },
-                onChangeEnd: (v) {
-                  // 不清除 _draggingValue，等 isSnapping 结束后由 didUpdateWidget 清除
-                  widget.onChangeEnd(v.round());
-                },
+                onChanged: isBusy
+                    ? null
+                    : (v) => onChanged(v.round()),
+                onChangeEnd: isBusy
+                    ? null
+                    : (v) => onChangeEnd(v.round()),
               ),
             ),
             IconButton(
-              onPressed: widget.isSnapping ? null : widget.onNext,
+              onPressed: isBusy ? null : onNext,
               icon: const Icon(Icons.skip_next),
               tooltip: '下一个关键帧',
             ),
@@ -86,7 +71,7 @@ class _TrimSliderState extends State<TrimSlider> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(formatTimestampDisplay(0)),
-              Text(formatTimestampDisplay(widget.durationUs)),
+              Text(formatTimestampDisplay(durationUs)),
             ],
           ),
         ),

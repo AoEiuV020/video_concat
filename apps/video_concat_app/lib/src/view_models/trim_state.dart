@@ -30,6 +30,9 @@ abstract class TrimState with _$TrimState {
     /// 滑块释放后正在吸附关键帧
     @Default(false) bool isSnapping,
 
+    /// 拖动中的滑块位置（微秒），null 表示未拖动
+    int? draggingPositionUs,
+
     /// 已选片段列表
     @Default([]) List<TrimSegment> segments,
 

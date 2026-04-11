@@ -16,23 +16,18 @@ class TrimPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(trimViewModelProvider(videoId));
     final vm = ref.read(trimViewModelProvider(videoId).notifier);
+    final isBusy = state.isSnapping || state.isLoadingPreview;
 
     return Scaffold(
       appBar: AppBar(
         title: Text(state.fileName, overflow: TextOverflow.ellipsis),
         actions: [
           TextButton(
-            onPressed: state.isLoadingPreview
-                ? null
-                : () {
-                    vm.confirm();
-                    context.pop();
-                  },
+            onPressed: () {
+              vm.confirm();
+              context.pop();
+            },
             child: const Text('确认'),
-          ),
-          TextButton(
-            onPressed: () => context.pop(),
-            child: const Text('取消'),
           ),
         ],
       ),
@@ -56,9 +51,10 @@ class TrimPage extends ConsumerWidget {
                   child: TrimSlider(
                     durationUs: state.durationUs,
                     currentPositionUs: state.currentPositionUs,
+                    draggingPositionUs: state.draggingPositionUs,
                     inpointUs: state.pendingInpointUs ?? 0,
                     segments: state.segments,
-                    isSnapping: state.isSnapping,
+                    isBusy: isBusy,
                     onChanged: (us) => vm.onSliderDragging(us),
                     onChangeEnd: (us) => vm.onSliderReleased(us),
                     onPrevious: () => vm.goToPreviousKeyframe(),
@@ -71,7 +67,7 @@ class TrimPage extends ConsumerWidget {
                     children: [
                       Expanded(
                         child: OutlinedButton.icon(
-                          onPressed: state.isSnapping
+                          onPressed: isBusy
                               ? null
                               : () => vm.setInpoint(),
                           icon: const Icon(Icons.skip_previous),
@@ -81,7 +77,7 @@ class TrimPage extends ConsumerWidget {
                       const SizedBox(width: 16),
                       Expanded(
                         child: FilledButton.icon(
-                          onPressed: state.isSnapping
+                          onPressed: isBusy
                               ? null
                               : () {
                                   final error = vm.setOutpoint();
