@@ -166,6 +166,9 @@ class _HomePageState extends ConsumerState<HomePage> {
         }
         context.push(uri);
       },
+      onTrim: () {
+        context.push('/trim?id=${Uri.encodeComponent(item.id)}');
+      },
       isOutOfOrder: isOutOfOrder,
       isIncompatible: isIncompatible,
     );
