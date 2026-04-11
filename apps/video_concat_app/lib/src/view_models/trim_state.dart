@@ -24,8 +24,11 @@ abstract class TrimState with _$TrimState {
     /// 当前滑块位置（微秒，已吸附到关键帧）
     @Default(0) int currentPositionUs,
 
-    /// 当前 inpoint（微秒），默认为 0
-    @Default(0) int inpointUs,
+    /// 待配对的 inpoint（微秒），null 表示无待配对
+    int? pendingInpointUs,
+
+    /// 滑块释放后正在吸附关键帧
+    @Default(false) bool isSnapping,
 
     /// 已选片段列表
     @Default([]) List<TrimSegment> segments,

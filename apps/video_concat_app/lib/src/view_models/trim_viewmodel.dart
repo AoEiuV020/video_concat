@@ -61,6 +61,7 @@ class TrimViewModel extends _$TrimViewModel {
       durationUs: durationUs,
       segments: existingSegments,
       isLoading: durationUs > 0,
+      pendingInpointUs: existingSegments.isEmpty ? 0 : null,
     );
   }
 
@@ -106,38 +107,62 @@ class TrimViewModel extends _$TrimViewModel {
 
   /// 设置 inpoint 为当前位置
   void setInpoint() {
-    state = state.copyWith(inpointUs: state.currentPositionUs);
+    logger.d('setInpoint currentPositionUs=${state.currentPositionUs}');
+    state = state.copyWith(pendingInpointUs: state.currentPositionUs);
   }
 
-  /// 设置 outpoint 并创建片段
+  /// 设置 outpoint 并创建或更新片段
   ///
   /// 返回错误消息（null 表示成功）
   String? setOutpoint() {
-    final inpoint = state.inpointUs;
     final outpoint = state.currentPositionUs;
+    final pending = state.pendingInpointUs;
+    logger.d('setOutpoint outpoint=$outpoint pending=$pending');
 
-    if (outpoint <= inpoint) {
-      return '终点必须在起点之后';
-    }
-
-    // 检查片段重叠
-    final newSeg = TrimSegment(inpoint: inpoint, outpoint: outpoint);
-    for (final existing in state.segments) {
-      if (_overlaps(newSeg, existing)) {
-        return '新片段与已有片段重叠';
+    if (pending != null) {
+      // 有 pending inpoint → 创建新片段
+      if (outpoint <= pending) {
+        return '终点必须在起点之后';
       }
+      final newSeg = TrimSegment(inpoint: pending, outpoint: outpoint);
+      for (final existing in state.segments) {
+        if (_overlaps(newSeg, existing)) {
+          return '新片段与已有片段重叠';
+        }
+      }
+      final segments = [...state.segments, newSeg]
+        ..sort((a, b) => a.inpoint.compareTo(b.inpoint));
+      state = state.copyWith(
+        segments: segments,
+        pendingInpointUs: null,
+      );
+    } else {
+      // 无 pending → 更新最后一个片段的 outpoint
+      if (state.segments.isEmpty) {
+        return '没有可更新的片段';
+      }
+      final lastIdx = state.segments.length - 1;
+      final last = state.segments[lastIdx];
+      if (outpoint <= last.inpoint) {
+        return '终点必须在起点之后';
+      }
+      final updated = TrimSegment(inpoint: last.inpoint, outpoint: outpoint);
+      for (var i = 0; i < state.segments.length - 1; i++) {
+        if (_overlaps(updated, state.segments[i])) {
+          return '更新后的片段与已有片段重叠';
+        }
+      }
+      final segments = [...state.segments];
+      segments[lastIdx] = updated;
+      state = state.copyWith(segments: segments);
     }
-
-    // 添加并排序
-    final segments = [...state.segments, newSeg]
-      ..sort((a, b) => a.inpoint.compareTo(b.inpoint));
-
-    state = state.copyWith(
-      segments: segments,
-      inpointUs: 0, // 重置 inpoint
-    );
-
     return null;
+  }
+
+  /// 删除 pending inpoint
+  void removePendingInpoint() {
+    logger.d('removePendingInpoint');
+    state = state.copyWith(pendingInpointUs: null);
   }
 
   /// 删除片段

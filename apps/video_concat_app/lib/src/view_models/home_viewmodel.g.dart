@@ -44,7 +44,7 @@ final class HomeViewModelProvider
   }
 }
 
-String _$homeViewModelHash() => r'c9d22b9370f37d4721af1d06c526c59b55a57f46';
+String _$homeViewModelHash() => r'2ecdc792478fbd380362ab56bb4f078edd345ce4';
 
 /// 主页 ViewModel
 

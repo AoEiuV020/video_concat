@@ -74,7 +74,7 @@ final class VideoInfoProvider
   }
 }
 
-String _$videoInfoHash() => r'bc55dadcbb2a5528d607f4a0ed0e0c40f482ee3a';
+String _$videoInfoHash() => r'0fe3f8ff6b1969da2be59c12c98863d4318c36b3';
 
 /// 视频信息 ViewModel
 ///

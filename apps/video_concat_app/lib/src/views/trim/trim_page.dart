@@ -1,4 +1,3 @@
-import 'package:ffmpeg_kit/ffmpeg_kit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -55,7 +54,7 @@ class TrimPage extends ConsumerWidget {
                   child: TrimSlider(
                     durationUs: state.durationUs,
                     currentPositionUs: state.currentPositionUs,
-                    inpointUs: state.inpointUs,
+                    inpointUs: state.pendingInpointUs ?? 0,
                     segments: state.segments,
                     onChanged: (us) {}, // 拖动中不处理
                     onChangeEnd: (us) => vm.onSliderReleased(us),
@@ -67,25 +66,26 @@ class TrimPage extends ConsumerWidget {
                     children: [
                       Expanded(
                         child: OutlinedButton.icon(
-                          onPressed: () => vm.setInpoint(),
+                          onPressed: state.isSnapping
+                              ? null
+                              : () => vm.setInpoint(),
                           icon: const Icon(Icons.skip_previous),
-                          label: Text(
-                            '设为 inpoint'
-                            ' (${formatTimestampDisplay(state.inpointUs)})',
-                          ),
+                          label: const Text('设为 inpoint'),
                         ),
                       ),
                       const SizedBox(width: 16),
                       Expanded(
                         child: FilledButton.icon(
-                          onPressed: () {
-                            final error = vm.setOutpoint();
-                            if (error != null) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text(error)),
-                              );
-                            }
-                          },
+                          onPressed: state.isSnapping
+                              ? null
+                              : () {
+                                  final error = vm.setOutpoint();
+                                  if (error != null) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text(error)),
+                                    );
+                                  }
+                                },
                           icon: const Icon(Icons.skip_next),
                           label: const Text('设为 outpoint'),
                         ),
@@ -99,7 +99,9 @@ class TrimPage extends ConsumerWidget {
                 Expanded(
                   child: SegmentList(
                     segments: state.segments,
+                    pendingInpointUs: state.pendingInpointUs,
                     onDelete: (index) => vm.removeSegment(index),
+                    onDeletePending: () => vm.removePendingInpoint(),
                   ),
                 ),
                 if (state.errorMessage != null)
