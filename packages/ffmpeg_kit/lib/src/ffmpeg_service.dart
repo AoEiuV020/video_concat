@@ -1,5 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
+
+import 'utils/timestamp.dart';
 
 /// FFmpeg 执行回调
 typedef OutputCallback = void Function(String output);
@@ -75,5 +78,42 @@ class FFmpegService {
         process.kill(ProcessSignal.sigkill);
       });
     }
+  }
+
+  /// 提取指定时间点的视频帧画面。
+  ///
+  /// 使用 -ss 在 -i 之前直接跳转到关键帧，耗时约 50~80ms。
+  /// 返回 JPEG 图像字节数据，失败返回 null。
+  ///
+  /// [filePath] 视频文件路径
+  /// [timestampUs] 目标时间（微秒），应为关键帧时间
+  /// [maxWidth] 预览图最大宽度（像素），高度按比例缩放
+  Future<Uint8List?> extractFrame({
+    required String filePath,
+    required int timestampUs,
+    int maxWidth = 640,
+  }) async {
+    final timestampStr = formatTimestampUs(timestampUs);
+
+    final result = await Process.run(
+      _ffmpegPath,
+      [
+        '-ss', timestampStr,
+        '-i', filePath,
+        '-vframes', '1',
+        '-q:v', '5',
+        '-vf', 'scale=$maxWidth:-1',
+        '-f', 'image2pipe',
+        '-vcodec', 'mjpeg',
+        'pipe:1',
+      ],
+      stdoutEncoding: null,
+    );
+
+    if (result.exitCode != 0) return null;
+
+    final bytes = result.stdout as List<int>;
+    if (bytes.isEmpty) return null;
+    return Uint8List.fromList(bytes);
   }
 }
