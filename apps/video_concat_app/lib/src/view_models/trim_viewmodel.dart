@@ -184,14 +184,20 @@ class TrimViewModel extends _$TrimViewModel {
   String? setOutpoint() {
     final outpoint = state.currentPositionUs;
     final pending = state.pendingInpointUs;
-    logger.d('setOutpoint outpoint=$outpoint pending=$pending');
+    final outpointDts = _cache.getDts(outpoint);
+    logger.d('setOutpoint outpoint=$outpoint pending=$pending '
+        'outpointDts=$outpointDts');
 
     if (pending != null) {
       // 有 pending inpoint → 创建新片段
       if (outpoint <= pending) {
         return '终点必须在起点之后';
       }
-      final newSeg = TrimSegment(inpoint: pending, outpoint: outpoint);
+      final newSeg = TrimSegment(
+        inpoint: pending,
+        outpoint: outpoint,
+        outpointDtsUs: outpointDts,
+      );
       for (final existing in state.segments) {
         if (_overlaps(newSeg, existing)) {
           return '新片段与已有片段重叠';
@@ -213,7 +219,11 @@ class TrimViewModel extends _$TrimViewModel {
       if (outpoint <= last.inpoint) {
         return '终点必须在起点之后';
       }
-      final updated = TrimSegment(inpoint: last.inpoint, outpoint: outpoint);
+      final updated = TrimSegment(
+        inpoint: last.inpoint,
+        outpoint: outpoint,
+        outpointDtsUs: outpointDts,
+      );
       for (var i = 0; i < state.segments.length - 1; i++) {
         if (_overlaps(updated, state.segments[i])) {
           return '更新后的片段与已有片段重叠';
@@ -281,7 +291,7 @@ class TrimViewModel extends _$TrimViewModel {
         );
 
         logger.d('findKeyframes 返回 ${keyframes.length} 个关键帧'
-            '${keyframes.isNotEmpty ? ": ${keyframes.take(5)}" : ""}');
+            '${keyframes.isNotEmpty ? ": ${keyframes.take(5).map((k) => k.ptsUs)}" : ""}');
 
         _cache.addRange(startUs, endUs, keyframes);
 

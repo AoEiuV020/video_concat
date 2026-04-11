@@ -8,6 +8,7 @@ import 'utils/timestamp.dart';
 /// - 有裁剪：每片段一条 `file 'path'` + 可选 inpoint/outpoint
 /// - inpoint = 0 时省略
 /// - outpoint = 视频时长时省略
+/// - outpoint 使用 [TrimSegment.effectiveOutpoint]（优先 DTS，实现左闭右开）
 String buildFilelistContent(List<ConcatEntry> entries) {
   final buffer = StringBuffer();
   var first = true;
@@ -35,7 +36,8 @@ String buildFilelistContent(List<ConcatEntry> entries) {
         final shouldOmitOutpoint = entry.durationUs != null &&
             segment.outpoint >= entry.durationUs!;
         if (!shouldOmitOutpoint) {
-          buffer.write('\noutpoint ${formatTimestampUs(segment.outpoint)}');
+          buffer.write(
+              '\noutpoint ${formatTimestampUs(segment.effectiveOutpoint)}');
         }
 
         first = false;

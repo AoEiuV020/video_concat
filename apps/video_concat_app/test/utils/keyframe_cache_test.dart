@@ -1,5 +1,14 @@
+import 'package:ffmpeg_kit/ffmpeg_kit.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:video_concat_app/src/utils/keyframe_cache.dart';
+
+/// PTS-only 关键帧快捷构造
+List<Keyframe> _kfs(List<int> ptsList) =>
+    ptsList.map((p) => Keyframe(ptsUs: p)).toList();
+
+/// PTS+DTS 关键帧快捷构造
+List<Keyframe> _kfsDts(List<(int, int?)> pairs) =>
+    pairs.map((p) => Keyframe(ptsUs: p.$1, dtsUs: p.$2)).toList();
 
 void main() {
   group('KeyframeCache.isCovered', () {
@@ -10,7 +19,7 @@ void main() {
 
     test('目标在已查询区间内：已覆盖', () {
       final cache = KeyframeCache(durationUs: 120000000);
-      cache.addRange(10000000, 30000000, [15000000, 20000000]);
+      cache.addRange(10000000, 30000000, _kfs([15000000, 20000000]));
       expect(cache.isCovered(20000000), true);
     });
 
@@ -39,8 +48,8 @@ void main() {
 
     test('重叠区间合并', () {
       final cache = KeyframeCache(durationUs: 120000000);
-      cache.addRange(10000000, 30000000, [15000000]);
-      cache.addRange(25000000, 55000000, [40000000]);
+      cache.addRange(10000000, 30000000, _kfs([15000000]));
+      cache.addRange(25000000, 55000000, _kfs([40000000]));
       expect(cache.isCovered(10000000), true);
       expect(cache.isCovered(40000000), true);
       expect(cache.isCovered(55000000), true);
@@ -55,9 +64,9 @@ void main() {
 
     test('三个区间合并为一个', () {
       final cache = KeyframeCache(durationUs: 120000000);
-      cache.addRange(10000000, 20000000, [15000000]);
-      cache.addRange(40000000, 50000000, [45000000]);
-      cache.addRange(15000000, 45000000, [30000000]);
+      cache.addRange(10000000, 20000000, _kfs([15000000]));
+      cache.addRange(40000000, 50000000, _kfs([45000000]));
+      cache.addRange(15000000, 45000000, _kfs([30000000]));
       expect(cache.isCovered(10000000), true);
       expect(cache.isCovered(30000000), true);
       expect(cache.isCovered(50000000), true);
@@ -65,8 +74,8 @@ void main() {
 
     test('关键帧去重并排序', () {
       final cache = KeyframeCache(durationUs: 120000000);
-      cache.addRange(0, 20000000, [5000000, 10000000]);
-      cache.addRange(5000000, 25000000, [10000000, 20000000]);
+      cache.addRange(0, 20000000, _kfs([5000000, 10000000]));
+      cache.addRange(5000000, 25000000, _kfs([10000000, 20000000]));
       expect(cache.keyframes, [5000000, 10000000, 20000000]);
     });
   });
@@ -74,31 +83,31 @@ void main() {
   group('KeyframeCache.findNearest', () {
     test('精确命中', () {
       final cache = KeyframeCache(durationUs: 120000000);
-      cache.addRange(0, 30000000, [0, 4004000, 8008000]);
+      cache.addRange(0, 30000000, _kfs([0, 4004000, 8008000]));
       expect(cache.findNearest(4004000), 4004000);
     });
 
     test('取更近的前关键帧', () {
       final cache = KeyframeCache(durationUs: 120000000);
-      cache.addRange(0, 30000000, [0, 4004000, 8008000]);
+      cache.addRange(0, 30000000, _kfs([0, 4004000, 8008000]));
       expect(cache.findNearest(5000000), 4004000);
     });
 
     test('取更近的后关键帧', () {
       final cache = KeyframeCache(durationUs: 120000000);
-      cache.addRange(0, 30000000, [0, 4004000, 8008000]);
+      cache.addRange(0, 30000000, _kfs([0, 4004000, 8008000]));
       expect(cache.findNearest(7000000), 8008000);
     });
 
     test('目标在最后一个关键帧之后', () {
       final cache = KeyframeCache(durationUs: 120000000);
-      cache.addRange(0, 30000000, [0, 4004000, 8008000]);
+      cache.addRange(0, 30000000, _kfs([0, 4004000, 8008000]));
       expect(cache.findNearest(99000000), 8008000);
     });
 
     test('目标在第一个关键帧之前', () {
       final cache = KeyframeCache(durationUs: 120000000);
-      cache.addRange(2000000, 30000000, [4004000, 8008000]);
+      cache.addRange(2000000, 30000000, _kfs([4004000, 8008000]));
       expect(cache.findNearest(1000000), 4004000);
     });
 
@@ -111,19 +120,19 @@ void main() {
   group('KeyframeCache.findPrevious', () {
     test('返回前一个关键帧', () {
       final cache = KeyframeCache(durationUs: 120000000);
-      cache.addRange(0, 30000000, [0, 4004000, 8008000]);
+      cache.addRange(0, 30000000, _kfs([0, 4004000, 8008000]));
       expect(cache.findPrevious(8008000), 4004000);
     });
 
     test('精确匹配时不返回自身', () {
       final cache = KeyframeCache(durationUs: 120000000);
-      cache.addRange(0, 30000000, [0, 4004000, 8008000]);
+      cache.addRange(0, 30000000, _kfs([0, 4004000, 8008000]));
       expect(cache.findPrevious(4004000), 0);
     });
 
     test('第一个关键帧无前驱', () {
       final cache = KeyframeCache(durationUs: 120000000);
-      cache.addRange(0, 30000000, [0, 4004000]);
+      cache.addRange(0, 30000000, _kfs([0, 4004000]));
       expect(cache.findPrevious(0), isNull);
     });
 
@@ -136,19 +145,19 @@ void main() {
   group('KeyframeCache.findNext', () {
     test('返回后一个关键帧', () {
       final cache = KeyframeCache(durationUs: 120000000);
-      cache.addRange(0, 30000000, [0, 4004000, 8008000]);
+      cache.addRange(0, 30000000, _kfs([0, 4004000, 8008000]));
       expect(cache.findNext(0), 4004000);
     });
 
     test('精确匹配时不返回自身', () {
       final cache = KeyframeCache(durationUs: 120000000);
-      cache.addRange(0, 30000000, [0, 4004000, 8008000]);
+      cache.addRange(0, 30000000, _kfs([0, 4004000, 8008000]));
       expect(cache.findNext(4004000), 8008000);
     });
 
     test('最后一个关键帧无后继', () {
       final cache = KeyframeCache(durationUs: 120000000);
-      cache.addRange(0, 30000000, [0, 4004000, 8008000]);
+      cache.addRange(0, 30000000, _kfs([0, 4004000, 8008000]));
       expect(cache.findNext(8008000), isNull);
     });
 
@@ -158,16 +167,49 @@ void main() {
     });
   });
 
+  group('KeyframeCache.getDts', () {
+    test('返回对应的 DTS', () {
+      final cache = KeyframeCache(durationUs: 120000000);
+      cache.addRange(0, 30000000, _kfsDts([
+        (0, null),
+        (2083000, 2075000),
+        (4167000, 4158000),
+      ]));
+      expect(cache.getDts(2083000), 2075000);
+      expect(cache.getDts(4167000), 4158000);
+    });
+
+    test('DTS 为 N/A 时返回 null', () {
+      final cache = KeyframeCache(durationUs: 120000000);
+      cache.addRange(0, 10000000, _kfsDts([(0, null)]));
+      expect(cache.getDts(0), isNull);
+    });
+
+    test('不存在的 PTS 返回 null', () {
+      final cache = KeyframeCache(durationUs: 120000000);
+      cache.addRange(0, 10000000, _kfsDts([(0, null)]));
+      expect(cache.getDts(9999999), isNull);
+    });
+
+    test('多次 addRange 合并 DTS 映射', () {
+      final cache = KeyframeCache(durationUs: 120000000);
+      cache.addRange(0, 10000000, _kfsDts([(0, null), (2083000, 2075000)]));
+      cache.addRange(2000000, 20000000, _kfsDts([(4167000, 4158000)]));
+      expect(cache.getDts(2083000), 2075000);
+      expect(cache.getDts(4167000), 4158000);
+    });
+  });
+
   group('KeyframeCache 边界处理', () {
     test('start < 0 截断为 0', () {
       final cache = KeyframeCache(durationUs: 120000000);
-      cache.addRange(-5000000, 10000000, [0]);
+      cache.addRange(-5000000, 10000000, _kfs([0]));
       expect(cache.isCovered(0), true);
     });
 
     test('end > 视频时长截断', () {
       final cache = KeyframeCache(durationUs: 120000000);
-      cache.addRange(100000000, 999000000, [110000000]);
+      cache.addRange(100000000, 999000000, _kfs([110000000]));
       expect(cache.isCovered(120000000), true);
     });
   });

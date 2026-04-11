@@ -134,13 +134,41 @@ duration dur
 
 测试环境：120fps HEVC MKV，关键帧间隔约 2.083s。
 
+### PTS vs DTS
+
+关键帧的 PTS（显示时间戳）和 DTS（解码时间戳）在含 B 帧的编码中不相等：
+
+| 关键帧 | PTS | DTS | PTS-DTS |
+|--------|---------|---------|---------|
+| #1     | 0.000   | N/A     | -       |
+| #2     | 2.083   | 2.075   | 8ms     |
+| #3     | 4.167   | 4.158   | 9ms     |
+
+**concat demuxer 的 outpoint 按 DTS 比较**，不是 PTS。当用 PTS 设置 outpoint 时，
+关键帧的 DTS < outpoint → 该帧被包含 → 相邻片段拼接时该帧出现两次。
+
+### 用 PTS 作 outpoint（旧方式，有重复）
+
 | 片段 | 帧数 |
 |------|------|
-| A: 0 → 2.083s | 251 |
-| B: 2.083s → 4.167s | 251 |
+| A: 0 → 2.083s(PTS) | 251 |
+| B: 2.083s → 4.167s(PTS) | 251 |
 | A+B 拼接 | 502 |
 | 直接 0 → 4.167s | 501 |
 
-**结论**：相邻片段在关键帧边界有 **1 帧重复**。`-c copy` 模式下，concat demuxer 的 outpoint 并非严格排他，边界关键帧同时出现在前后两段。
+### 用 DTS 作 outpoint（修复后，无重复）
 
-**影响评估**：120fps 下 1 帧 = 8.3ms，肉眼不可见，暂不修复。
+| 片段 | 帧数 |
+|------|------|
+| A: 0 → 2.075s(DTS) | 250 |
+| B: 2.083s(PTS) → 4.158s(DTS) | 250 |
+| A+B 拼接 | 500 |
+| 直接 0 → 4.158s(DTS) | 500 |
+
+### 实现方式
+
+- **inpoint** 使用 PTS（seek 用 PTS，正确包含起始关键帧）→ 左闭
+- **outpoint** 使用 DTS（concat demuxer 按 DTS 比较，排除边界关键帧）→ 右开
+- ffprobe 同时查询 `pts_time,dts_time`，缓存维护 PTS→DTS 映射
+- `TrimSegment.effectiveOutpoint` 优先返回 DTS，无 DTS 时回退到 PTS
+- 对无 B 帧的编码（MJPEG、ProRes 等），DTS=PTS，行为不变

@@ -145,5 +145,38 @@ void main() {
         "file '/path/it'\\''s a video.mp4'",
       );
     });
+
+    test('outpointDtsUs 存在时使用 DTS 作为 outpoint', () {
+      final entries = [
+        ConcatEntry(
+          filePath: '/path/E.mp4',
+          trimConfig: TrimConfig(segments: [
+            TrimSegment(
+              inpoint: 0,
+              outpoint: 2083000,
+              outpointDtsUs: 2075000,
+            ),
+          ]),
+          durationUs: 120000000,
+        ),
+      ];
+      final content = buildFilelistContent(entries);
+      expect(content, contains('outpoint 2.075000'));
+      expect(content, isNot(contains('outpoint 2.083000')));
+    });
+
+    test('outpointDtsUs 为 null 时回退到 outpoint', () {
+      final entries = [
+        ConcatEntry(
+          filePath: '/path/F.mp4',
+          trimConfig: TrimConfig(segments: [
+            TrimSegment(inpoint: 0, outpoint: 2083000),
+          ]),
+          durationUs: 120000000,
+        ),
+      ];
+      final content = buildFilelistContent(entries);
+      expect(content, contains('outpoint 2.083000'));
+    });
   });
 }

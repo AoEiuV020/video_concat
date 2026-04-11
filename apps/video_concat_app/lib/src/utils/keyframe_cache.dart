@@ -1,3 +1,5 @@
+import 'package:ffmpeg_kit/ffmpeg_kit.dart';
+
 /// 关键帧区间缓存。
 ///
 /// 维护已查询区间和关键帧列表，避免重复探测。
@@ -8,15 +10,18 @@ class KeyframeCache {
   /// 已查询区间列表，按 start 升序，不重叠
   final List<(int, int)> _searchedRanges = [];
 
-  /// 已发现的关键帧时间戳列表，升序去重
+  /// 已发现的关键帧 PTS 列表，升序去重
   final List<int> _keyframes = [];
+
+  /// PTS → DTS 映射（用于 outpoint 生成）
+  final Map<int, int> _dtsMap = {};
 
   /// 相邻区间合并阈值（微秒）：1 秒
   static const _mergeThreshold = 1000000;
 
   KeyframeCache({required this.durationUs});
 
-  /// 已发现的关键帧列表（只读）
+  /// 已发现的关键帧 PTS 列表（只读）
   List<int> get keyframes => List.unmodifiable(_keyframes);
 
   /// 判断目标时间是否在已查询区间内
@@ -28,17 +33,25 @@ class KeyframeCache {
   }
 
   /// 添加新的查询结果并合并区间
-  void addRange(int startUs, int endUs, List<int> newKeyframes) {
+  void addRange(int startUs, int endUs, List<Keyframe> newKeyframes) {
     // 边界截断
     final clampedStart = startUs < 0 ? 0 : startUs;
     final clampedEnd = endUs > durationUs ? durationUs : endUs;
 
     // 合并关键帧
-    final keyframeSet = _keyframes.toSet()..addAll(newKeyframes);
+    final keyframeSet = _keyframes.toSet()
+      ..addAll(newKeyframes.map((k) => k.ptsUs));
     _keyframes
       ..clear()
       ..addAll(keyframeSet)
       ..sort();
+
+    // 合并 DTS 映射
+    for (final kf in newKeyframes) {
+      if (kf.dtsUs != null) {
+        _dtsMap[kf.ptsUs] = kf.dtsUs!;
+      }
+    }
 
     // 添加新区间并合并
     _searchedRanges.add((clampedStart, clampedEnd));
@@ -127,4 +140,7 @@ class KeyframeCache {
     }
     return lo < _keyframes.length ? _keyframes[lo] : null;
   }
+
+  /// 查询关键帧的 DTS 时间戳（微秒），不存在返回 null
+  int? getDts(int ptsUs) => _dtsMap[ptsUs];
 }

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'log.dart';
+import 'models/keyframe.dart';
 import 'models/probe_result.dart';
 import 'utils/timestamp.dart';
 
@@ -78,32 +79,44 @@ class FFprobeService {
       ],
       '-select_streams', 'v:0',
       '-skip_frame', 'nokey',
-      '-show_entries', 'frame=pts_time',
-      '-of', 'default=noprint_wrappers=1:nokey=1',
+      '-show_entries', 'frame=pts_time,dts_time',
+      '-of', 'csv=p=0',
       filePath,
     ];
   }
 
-  /// 解析关键帧探测输出为微秒时间戳列表。
-  static List<int> parseKeyframeOutput(String output) {
+  /// 解析关键帧探测输出为 [Keyframe] 列表。
+  ///
+  /// 输入格式为 csv：每行 `pts_time,dts_time`，
+  /// DTS 可能为 "N/A"。
+  static List<Keyframe> parseKeyframeOutput(String output) {
     final lines = output.split('\n').where((l) => l.trim().isNotEmpty);
-    final timestamps = <int>[];
+    final keyframes = <Keyframe>[];
     for (final line in lines) {
-      final value = double.tryParse(line.trim());
-      if (value != null) {
-        timestamps.add(parseTimestampUs(line.trim()));
+      final parts = line.trim().split(',');
+      if (parts.isEmpty) continue;
+      final ptsValue = double.tryParse(parts[0]);
+      if (ptsValue == null) continue;
+      final ptsUs = parseTimestampUs(parts[0]);
+      int? dtsUs;
+      if (parts.length > 1) {
+        final dtsValue = double.tryParse(parts[1]);
+        if (dtsValue != null) {
+          dtsUs = parseTimestampUs(parts[1]);
+        }
       }
+      keyframes.add(Keyframe(ptsUs: ptsUs, dtsUs: dtsUs));
     }
-    timestamps.sort();
-    return timestamps;
+    keyframes.sort((a, b) => a.ptsUs.compareTo(b.ptsUs));
+    return keyframes;
   }
 
   /// 在指定时间窗口内查找关键帧。
   ///
   /// [startUs] 查询窗口起点（微秒）
   /// [endUs] 查询窗口终点（微秒）
-  /// 返回关键帧时间戳列表（微秒，升序）
-  Future<List<int>> findKeyframes(
+  /// 返回 [Keyframe] 列表（按 PTS 升序），含 PTS 和 DTS
+  Future<List<Keyframe>> findKeyframes(
     String filePath, {
     int? startUs,
     int? endUs,
