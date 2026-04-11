@@ -97,4 +97,34 @@ class KeyframeCache {
 
     return (targetUs - before) <= (after - targetUs) ? before : after;
   }
+
+  /// 返回严格小于 [targetUs] 的最大关键帧，不存在返回 null
+  int? findPrevious(int targetUs) {
+    if (_keyframes.isEmpty) return null;
+    var lo = 0, hi = _keyframes.length;
+    while (lo < hi) {
+      final mid = (lo + hi) >> 1;
+      if (_keyframes[mid] < targetUs) {
+        lo = mid + 1;
+      } else {
+        hi = mid;
+      }
+    }
+    return lo > 0 ? _keyframes[lo - 1] : null;
+  }
+
+  /// 返回严格大于 [targetUs] 的最小关键帧，不存在返回 null
+  int? findNext(int targetUs) {
+    if (_keyframes.isEmpty) return null;
+    var lo = 0, hi = _keyframes.length;
+    while (lo < hi) {
+      final mid = (lo + hi) >> 1;
+      if (_keyframes[mid] <= targetUs) {
+        lo = mid + 1;
+      } else {
+        hi = mid;
+      }
+    }
+    return lo < _keyframes.length ? _keyframes[lo] : null;
+  }
 }

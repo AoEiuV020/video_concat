@@ -108,6 +108,56 @@ void main() {
     });
   });
 
+  group('KeyframeCache.findPrevious', () {
+    test('返回前一个关键帧', () {
+      final cache = KeyframeCache(durationUs: 120000000);
+      cache.addRange(0, 30000000, [0, 4004000, 8008000]);
+      expect(cache.findPrevious(8008000), 4004000);
+    });
+
+    test('精确匹配时不返回自身', () {
+      final cache = KeyframeCache(durationUs: 120000000);
+      cache.addRange(0, 30000000, [0, 4004000, 8008000]);
+      expect(cache.findPrevious(4004000), 0);
+    });
+
+    test('第一个关键帧无前驱', () {
+      final cache = KeyframeCache(durationUs: 120000000);
+      cache.addRange(0, 30000000, [0, 4004000]);
+      expect(cache.findPrevious(0), isNull);
+    });
+
+    test('空缓存返回 null', () {
+      final cache = KeyframeCache(durationUs: 120000000);
+      expect(cache.findPrevious(5000000), isNull);
+    });
+  });
+
+  group('KeyframeCache.findNext', () {
+    test('返回后一个关键帧', () {
+      final cache = KeyframeCache(durationUs: 120000000);
+      cache.addRange(0, 30000000, [0, 4004000, 8008000]);
+      expect(cache.findNext(0), 4004000);
+    });
+
+    test('精确匹配时不返回自身', () {
+      final cache = KeyframeCache(durationUs: 120000000);
+      cache.addRange(0, 30000000, [0, 4004000, 8008000]);
+      expect(cache.findNext(4004000), 8008000);
+    });
+
+    test('最后一个关键帧无后继', () {
+      final cache = KeyframeCache(durationUs: 120000000);
+      cache.addRange(0, 30000000, [0, 4004000, 8008000]);
+      expect(cache.findNext(8008000), isNull);
+    });
+
+    test('空缓存返回 null', () {
+      final cache = KeyframeCache(durationUs: 120000000);
+      expect(cache.findNext(5000000), isNull);
+    });
+  });
+
   group('KeyframeCache 边界处理', () {
     test('start < 0 截断为 0', () {
       final cache = KeyframeCache(durationUs: 120000000);
