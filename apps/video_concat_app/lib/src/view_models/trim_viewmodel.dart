@@ -94,15 +94,58 @@ class TrimViewModel extends _$TrimViewModel {
   Future<void> onSliderReleased(int positionUs) async {
     logger.d('onSliderReleased positionUs=$positionUs');
 
+    // 立即更新到松手位置（不跳回旧位置）
+    state = state.copyWith(
+      currentPositionUs: positionUs,
+      isSnapping: true,
+    );
+
     await _ensureCovered(positionUs);
     final nearest = _cache.findNearest(positionUs);
 
     logger.d('onSliderReleased nearest=$nearest');
 
-    if (nearest == null) return;
+    if (nearest == null) {
+      state = state.copyWith(isSnapping: false);
+      return;
+    }
 
-    state = state.copyWith(currentPositionUs: nearest);
+    // 吸附完成，跳到关键帧
+    state = state.copyWith(
+      currentPositionUs: nearest,
+      isSnapping: false,
+    );
     await _loadPreview(nearest);
+  }
+
+  /// 跳到上一个关键帧
+  Future<void> goToPreviousKeyframe() async {
+    logger.d('goToPreviousKeyframe current=${state.currentPositionUs}');
+    state = state.copyWith(isSnapping: true);
+    await _ensureCovered(state.currentPositionUs);
+    final prev = _cache.findPrevious(state.currentPositionUs);
+    logger.d('goToPreviousKeyframe prev=$prev');
+    if (prev != null) {
+      state = state.copyWith(currentPositionUs: prev, isSnapping: false);
+      await _loadPreview(prev);
+    } else {
+      state = state.copyWith(isSnapping: false);
+    }
+  }
+
+  /// 跳到下一个关键帧
+  Future<void> goToNextKeyframe() async {
+    logger.d('goToNextKeyframe current=${state.currentPositionUs}');
+    state = state.copyWith(isSnapping: true);
+    await _ensureCovered(state.currentPositionUs);
+    final next = _cache.findNext(state.currentPositionUs);
+    logger.d('goToNextKeyframe next=$next');
+    if (next != null) {
+      state = state.copyWith(currentPositionUs: next, isSnapping: false);
+      await _loadPreview(next);
+    } else {
+      state = state.copyWith(isSnapping: false);
+    }
   }
 
   /// 设置 inpoint 为当前位置

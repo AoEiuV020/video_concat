@@ -56,8 +56,11 @@ class TrimPage extends ConsumerWidget {
                     currentPositionUs: state.currentPositionUs,
                     inpointUs: state.pendingInpointUs ?? 0,
                     segments: state.segments,
-                    onChanged: (us) {}, // 拖动中不处理
+                    isSnapping: state.isSnapping,
+                    onChanged: (us) {}, // 拖动中不处理（第五步实现）
                     onChangeEnd: (us) => vm.onSliderReleased(us),
+                    onPrevious: () => vm.goToPreviousKeyframe(),
+                    onNext: () => vm.goToNextKeyframe(),
                   ),
                 ),
                 Padding(
