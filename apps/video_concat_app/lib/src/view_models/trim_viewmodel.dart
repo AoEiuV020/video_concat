@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:ffmpeg_kit/ffmpeg_kit.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -13,6 +15,7 @@ part 'trim_viewmodel.g.dart';
 @riverpod
 class TrimViewModel extends _$TrimViewModel {
   late KeyframeCache _cache;
+  Timer? _debounceTimer;
 
   /// 默认查询窗口（微秒）：10秒
   static const _defaultWindowUs = 10000000;
@@ -25,6 +28,10 @@ class TrimViewModel extends _$TrimViewModel {
 
   @override
   TrimState build(String videoId) {
+    ref.onDispose(() {
+      _debounceTimer?.cancel();
+    });
+
     final homeState = ref.read(homeViewModelProvider);
     final item = homeState.videoItems.firstWhere((v) => v.id == videoId);
 
@@ -116,6 +123,23 @@ class TrimViewModel extends _$TrimViewModel {
       isSnapping: false,
     );
     await _loadPreview(nearest);
+  }
+
+  /// 拖动中调用，300ms 防抖触发关键帧预览
+  void onSliderDragging(int positionUs) {
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 300), () {
+      _onDragDebounced(positionUs);
+    });
+  }
+
+  Future<void> _onDragDebounced(int positionUs) async {
+    logger.d('_onDragDebounced positionUs=$positionUs');
+    await _ensureCovered(positionUs);
+    final nearest = _cache.findNearest(positionUs);
+    if (nearest != null) {
+      await _loadPreview(nearest);
+    }
   }
 
   /// 跳到上一个关键帧

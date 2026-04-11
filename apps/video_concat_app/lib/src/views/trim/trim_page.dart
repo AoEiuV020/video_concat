@@ -22,10 +22,12 @@ class TrimPage extends ConsumerWidget {
         title: Text(state.fileName, overflow: TextOverflow.ellipsis),
         actions: [
           TextButton(
-            onPressed: () {
-              vm.confirm();
-              context.pop();
-            },
+            onPressed: state.isLoadingPreview
+                ? null
+                : () {
+                    vm.confirm();
+                    context.pop();
+                  },
             child: const Text('确认'),
           ),
           TextButton(
@@ -57,7 +59,7 @@ class TrimPage extends ConsumerWidget {
                     inpointUs: state.pendingInpointUs ?? 0,
                     segments: state.segments,
                     isSnapping: state.isSnapping,
-                    onChanged: (us) {}, // 拖动中不处理（第五步实现）
+                    onChanged: (us) => vm.onSliderDragging(us),
                     onChangeEnd: (us) => vm.onSliderReleased(us),
                     onPrevious: () => vm.goToPreviousKeyframe(),
                     onNext: () => vm.goToNextKeyframe(),

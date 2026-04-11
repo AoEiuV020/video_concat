@@ -22,16 +22,31 @@ class TrimPreview extends StatelessWidget {
       children: [
         SizedBox(
           height: 240,
-          child: Center(
-            child: isLoading
-                ? const CircularProgressIndicator()
-                : previewImage != null
-                    ? Image.memory(
-                        previewImage!,
-                        fit: BoxFit.contain,
-                        gaplessPlayback: true,
-                      )
-                    : const Icon(Icons.image, size: 64, color: Colors.grey),
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              if (previewImage != null)
+                Image.memory(
+                  previewImage!,
+                  fit: BoxFit.contain,
+                  gaplessPlayback: true,
+                )
+              else
+                const Icon(Icons.image, size: 64, color: Colors.grey),
+              if (isLoading)
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.black38,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                ),
+            ],
           ),
         ),
         Padding(
