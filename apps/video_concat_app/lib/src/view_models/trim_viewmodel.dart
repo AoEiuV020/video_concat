@@ -250,11 +250,17 @@ class TrimViewModel extends _$TrimViewModel {
   ///
   /// 返回错误消息（null 表示成功）
   String? setOutpoint() {
-    final outpoint = state.currentPositionUs;
+    final current = state.currentPositionUs;
     final pending = state.pendingInpointUs;
-    final outpointDts = _cache.getDts(outpoint);
-    logger.d('setOutpoint outpoint=$outpoint pending=$pending '
-        'outpointDts=$outpointDts');
+
+    // 最后关键帧 → 用 durationUs 使 filelist 省略 outpoint，FFmpeg 读到末尾
+    final isLastKeyframe = _cache.findNext(current) == null;
+    final outpoint = isLastKeyframe ? state.durationUs : current;
+    final outpointDts = isLastKeyframe ? null : _cache.getDts(current);
+
+    logger.d('setOutpoint current=$current outpoint=$outpoint '
+        'pending=$pending outpointDts=$outpointDts '
+        'isLastKeyframe=$isLastKeyframe');
 
     if (pending != null) {
       // 有 pending inpoint → 创建新片段
