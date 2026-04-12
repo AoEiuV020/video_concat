@@ -230,8 +230,8 @@ return $default(_that.videoId,_that.filePath,_that.fileName,_that.durationUs,_th
 /// @nodoc
 
 
-class _TrimState implements TrimState {
-  const _TrimState({required this.videoId, required this.filePath, required this.fileName, required this.durationUs, this.currentPositionUs = 0, this.pendingInpointUs, this.isSnapping = false, this.draggingPositionUs, final  List<TrimSegment> segments = const [], this.previewImage, this.isLoadingPreview = false, this.isLoading = true, this.errorMessage}): _segments = segments;
+class _TrimState extends TrimState {
+  const _TrimState({required this.videoId, required this.filePath, required this.fileName, required this.durationUs, this.currentPositionUs = 0, this.pendingInpointUs, this.isSnapping = false, this.draggingPositionUs, final  List<TrimSegment> segments = const [], this.previewImage, this.isLoadingPreview = false, this.isLoading = true, this.errorMessage}): _segments = segments,super._();
   
 
 /// 视频 ID

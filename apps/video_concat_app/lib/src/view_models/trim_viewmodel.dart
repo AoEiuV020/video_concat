@@ -19,6 +19,7 @@ class TrimViewModel extends _$TrimViewModel {
   bool _disposed = false;
   bool _isHdr = false;
   int _previewGeneration = 0;
+  int _snapGeneration = 0;
 
   /// 默认查询窗口（微秒）：10秒
   static const _defaultWindowUs = 10000000;
@@ -121,18 +122,20 @@ class TrimViewModel extends _$TrimViewModel {
   /// 滑块松开时调用
   Future<void> onSliderReleased(int positionUs) async {
     logger.d('onSliderReleased positionUs=$positionUs');
+    final gen = ++_snapGeneration;
 
     // 立即更新到松手位置（不跳回旧位置）
+    final needsLoading = !_cache.isCovered(positionUs);
     state = state.copyWith(
       currentPositionUs: positionUs,
-      isSnapping: true,
+      isSnapping: needsLoading,
     );
 
     await _ensureCovered(positionUs);
-    if (_disposed) return;
+    if (_disposed || gen != _snapGeneration) return;
     final target = _resolveSnapTarget(positionUs);
 
-    logger.d('onSliderReleased target=$target');
+    logger.d('onSliderReleased target=$target needsLoading=$needsLoading');
 
     if (target == null) {
       state = state.copyWith(isSnapping: false, draggingPositionUs: null);
@@ -151,9 +154,11 @@ class TrimViewModel extends _$TrimViewModel {
   /// 拖动中调用，100ms 防抖触发关键帧预览
   void onSliderDragging(int positionUs) {
     _previewGeneration++;
+    _snapGeneration++;
     state = state.copyWith(
       draggingPositionUs: positionUs,
       isLoadingPreview: false,
+      isSnapping: false,
     );
     _debounceTimer?.cancel();
     _debounceTimer = Timer(const Duration(milliseconds: 100), () {
@@ -176,27 +181,41 @@ class TrimViewModel extends _$TrimViewModel {
   Future<void> goToPreviousKeyframe() async {
     final current = state.currentPositionUs;
     logger.d('goToPreviousKeyframe current=$current');
-    state = state.copyWith(isSnapping: true);
+    final gen = ++_snapGeneration;
 
-    // 虚拟末尾 → 跳到最后关键帧
+    // 虚拟末尾 → 跳到最后关键帧（一定在缓存中）
     if (current == state.durationUs) {
       final lastKf = _cache.findNearest(state.durationUs);
       logger.d('goToPreviousKeyframe 从虚拟末尾 → lastKf=$lastKf');
       if (lastKf != null) {
         state = state.copyWith(
           currentPositionUs: lastKf,
-          isSnapping: false,
           draggingPositionUs: null,
         );
         await _loadPreview(lastKf);
-      } else {
-        state = state.copyWith(isSnapping: false, draggingPositionUs: null);
       }
       return;
     }
 
+    // 快速路径：缓存命中，直接跳转
+    if (_cache.isCovered(current)) {
+      final prev = _cache.findPrevious(current);
+      if (prev != null && _cache.isCoveredRange(prev, current)) {
+        logger.d('goToPreviousKeyframe 缓存命中 prev=$prev');
+        state = state.copyWith(
+          currentPositionUs: prev,
+          draggingPositionUs: null,
+        );
+        await _loadPreview(prev);
+        return;
+      }
+    }
+
+    // 慢速路径：需要探测关键帧
+    state = state.copyWith(isSnapping: true);
+
     await _ensureCovered(current);
-    if (_disposed) return;
+    if (_disposed || gen != _snapGeneration) return;
     var prev = _cache.findPrevious(current);
 
     // 缓存中无前驱 或 前驱在不连续区间 → 向后探测
@@ -205,7 +224,7 @@ class TrimViewModel extends _$TrimViewModel {
       if (rangeStart != null && rangeStart > 0) {
         logger.d('goToPreviousKeyframe 向后探测 rangeStart=$rangeStart');
         await _ensureCovered(rangeStart - 1);
-        if (_disposed) return;
+        if (_disposed || gen != _snapGeneration) return;
         prev = _cache.findPrevious(current);
       }
     }
@@ -234,10 +253,40 @@ class TrimViewModel extends _$TrimViewModel {
       return;
     }
 
+    final gen = ++_snapGeneration;
+
+    // 快速路径：缓存命中
+    if (_cache.isCovered(current)) {
+      final next = _cache.findNext(current);
+      if (next != null && _cache.isCoveredRange(current, next)) {
+        logger.d('goToNextKeyframe 缓存命中 next=$next');
+        state = state.copyWith(
+          currentPositionUs: next,
+          draggingPositionUs: null,
+        );
+        await _loadPreview(next);
+        return;
+      }
+      // 无后继且已覆盖到末尾 → 虚拟末尾
+      if (next == null) {
+        final rangeEnd = _cache.coveredRangeEnd(current);
+        if (rangeEnd != null && rangeEnd >= state.durationUs) {
+          logger.d('goToNextKeyframe 缓存命中 → 虚拟末尾');
+          state = state.copyWith(
+            currentPositionUs: state.durationUs,
+            draggingPositionUs: null,
+          );
+          await _loadPreview(state.durationUs);
+          return;
+        }
+      }
+    }
+
+    // 慢速路径：需要探测关键帧
     state = state.copyWith(isSnapping: true);
 
     await _ensureCovered(current);
-    if (_disposed) return;
+    if (_disposed || gen != _snapGeneration) return;
     var next = _cache.findNext(current);
 
     // 缓存中无后继 或 后继在不连续区间 → 向前探测
@@ -246,7 +295,7 @@ class TrimViewModel extends _$TrimViewModel {
       if (rangeEnd != null && rangeEnd < state.durationUs) {
         logger.d('goToNextKeyframe 向前探测 rangeEnd=$rangeEnd');
         await _ensureCovered(rangeEnd + 1);
-        if (_disposed) return;
+        if (_disposed || gen != _snapGeneration) return;
         next = _cache.findNext(current);
       }
     }

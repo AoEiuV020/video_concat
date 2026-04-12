@@ -8,6 +8,8 @@ part 'trim_state.freezed.dart';
 /// 裁剪页面状态
 @freezed
 abstract class TrimState with _$TrimState {
+  const TrimState._();
+
   const factory TrimState({
     /// 视频 ID
     required String videoId,
@@ -48,4 +50,9 @@ abstract class TrimState with _$TrimState {
     /// 错误消息
     String? errorMessage,
   }) = _TrimState;
+
+  /// 当前时间不可用（未吸附到关键帧），拖动中和吸附中都属此状态。
+  ///
+  /// 此状态下 prev/next 和 In/Out 按钮禁用。
+  bool get isTimeUnresolved => isSnapping || draggingPositionUs != null;
 }
