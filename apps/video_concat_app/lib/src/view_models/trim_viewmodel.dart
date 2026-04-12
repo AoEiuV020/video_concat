@@ -18,6 +18,7 @@ class TrimViewModel extends _$TrimViewModel {
   Timer? _debounceTimer;
   bool _disposed = false;
   bool _isHdr = false;
+  int _previewGeneration = 0;
 
   /// 默认查询窗口（微秒）：10秒
   static const _defaultWindowUs = 10000000;
@@ -149,7 +150,11 @@ class TrimViewModel extends _$TrimViewModel {
 
   /// 拖动中调用，100ms 防抖触发关键帧预览
   void onSliderDragging(int positionUs) {
-    state = state.copyWith(draggingPositionUs: positionUs);
+    _previewGeneration++;
+    state = state.copyWith(
+      draggingPositionUs: positionUs,
+      isLoadingPreview: false,
+    );
     _debounceTimer?.cancel();
     _debounceTimer = Timer(const Duration(milliseconds: 100), () {
       _onDragDebounced(positionUs);
@@ -374,7 +379,8 @@ class TrimViewModel extends _$TrimViewModel {
   /// 加载预览图
   Future<void> _loadPreview(int timestampUs) async {
     if (_disposed) return;
-    logger.d('_loadPreview timestampUs=$timestampUs');
+    final gen = ++_previewGeneration;
+    logger.d('_loadPreview timestampUs=$timestampUs gen=$gen');
     state = state.copyWith(isLoadingPreview: true);
     try {
       final ffmpeg = ref.read(ffmpegServiceProvider);
@@ -385,7 +391,7 @@ class TrimViewModel extends _$TrimViewModel {
         timestampUs: timestampUs,
         isHdr: _isHdr,
       );
-      if (_disposed) return;
+      if (_disposed || gen != _previewGeneration) return;
 
       logger.d('extractFrame 返回 '
           '${bytes != null ? "${bytes.length} bytes" : "null"}');
@@ -395,7 +401,7 @@ class TrimViewModel extends _$TrimViewModel {
         isLoadingPreview: false,
       );
     } catch (e) {
-      if (_disposed) return;
+      if (_disposed || gen != _previewGeneration) return;
       logger.e('_loadPreview 异常', error: e);
       state = state.copyWith(
         isLoadingPreview: false,

@@ -8,7 +8,8 @@ class TrimSlider extends StatelessWidget {
   final int? draggingPositionUs;
   final int inpointUs;
   final List<TrimSegment> segments;
-  final bool isBusy;
+  final bool isSnapping;
+  final bool isButtonsDisabled;
   final ValueChanged<int> onChanged;
   final ValueChanged<int> onChangeEnd;
   final VoidCallback onPrevious;
@@ -21,7 +22,8 @@ class TrimSlider extends StatelessWidget {
     this.draggingPositionUs,
     required this.inpointUs,
     required this.segments,
-    this.isBusy = false,
+    this.isSnapping = false,
+    this.isButtonsDisabled = false,
     required this.onChanged,
     required this.onChangeEnd,
     required this.onPrevious,
@@ -41,7 +43,7 @@ class TrimSlider extends StatelessWidget {
         Row(
           children: [
             IconButton(
-              onPressed: isBusy ? null : onPrevious,
+              onPressed: isButtonsDisabled ? null : onPrevious,
               icon: const Icon(Icons.skip_previous),
               tooltip: '上一个关键帧',
             ),
@@ -50,16 +52,16 @@ class TrimSlider extends StatelessWidget {
                 value: value.clamp(0, max),
                 min: 0,
                 max: max,
-                onChanged: isBusy
+                onChanged: isSnapping
                     ? null
                     : (v) => onChanged(v.round()),
-                onChangeEnd: isBusy
+                onChangeEnd: isSnapping
                     ? null
                     : (v) => onChangeEnd(v.round()),
               ),
             ),
             IconButton(
-              onPressed: isBusy ? null : onNext,
+              onPressed: isButtonsDisabled ? null : onNext,
               icon: const Icon(Icons.skip_next),
               tooltip: '下一个关键帧',
             ),
