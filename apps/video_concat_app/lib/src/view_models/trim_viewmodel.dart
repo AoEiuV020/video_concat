@@ -162,6 +162,7 @@ class TrimViewModel extends _$TrimViewModel {
     if (_disposed) return;
     final nearest = _cache.findNearest(positionUs);
     if (nearest != null) {
+      state = state.copyWith(currentPositionUs: nearest);
       await _loadPreview(nearest);
     }
   }
