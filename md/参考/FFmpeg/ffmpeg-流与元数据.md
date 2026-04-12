@@ -107,4 +107,5 @@ ffmpeg -i input.mp4 -i chapters.txt -map_metadata 1 -c copy output.mp4
 |------|------|
 | `-an` + `-acodec copy` | 互斥，不能同时使用 |
 | `-map_metadata -1` + 章节注入 | 冲突：`-map_metadata -1` 清除元数据，`-map_metadata 1` 映射章节；需二选一 |
+| 章节注入 + MP4 输出 | MP4 muxer 会自动创建 `bin_data`（text）流作为章节文本轨道，这是 QuickTime 章节格式的内部表示，无法通过 `-map`/`-dn` 去除；MKV 不会产生此流。实测 `-map 0`、`-map 0:v -map 0:a`、`-dn` 均无效 |
 | `-movflags +faststart` + 非 mp4/mov | 参数被忽略，不报错 |

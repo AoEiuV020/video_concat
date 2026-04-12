@@ -34,3 +34,13 @@ file 'video3.mp4'
 | [`-an`](https://ffmpeg.org/ffmpeg.html#Audio-Options) | 禁用所有音频输出流 |
 
 > `-an` 与 `-acodec copy` **互斥**，不能同时使用。
+
+## 流结构要求
+
+[官方文档](https://ffmpeg.org/ffmpeg-formats.html#concat-1)要求所有文件 "must have the same streams (same codecs, same time base, etc.)"。实测验证：
+
+- 文件 A（video + audio，2 流）与文件 B（video + audio + bin_data，3 流）混合 concat → **成功**（exit code 0），不报流不匹配错误
+- data 流（`bin_data`）数量差异不影响 concat demuxer 的正常工作
+- 输出中仅包含 video + audio，多余的 data 流不会传递
+
+> 注：MP4 章节注入会自动创建 `bin_data` 文本轨道（QuickTime 章节格式），这是 MP4 muxer 的内部行为，无法通过 `-map` 或 `-dn` 去除。MKV 容器不产生此流。
