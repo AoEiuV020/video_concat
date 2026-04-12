@@ -12,14 +12,12 @@ melos gen
 # 静态分析
 melos analyze
 
-# 测试
-melos test
+# 测试 → 加载 flutter-test skill
 
 # 提交前格式化
 melos precommit                  # = melos fix + melos format + melos sort
 
-# 构建
-cd apps/video_concat_app && flutter build macos --debug
+# 构建 → 加载 flutter-build skill
 ```
 
 ## Tech Stack
