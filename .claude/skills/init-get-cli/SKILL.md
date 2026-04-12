@@ -1,27 +1,28 @@
 ---
 name: init-get-cli
-description: Install GetX CLI for Flutter GetX framework scaffolding. Use when user needs get_cli, wants to generate GetX pages/controllers, or gets "get_cli: command not found". Triggers on "install get_cli", "init get", "getx cli", "setup get_cli".
+description: "Use when get_cli command is not found or needs installation for GetX scaffolding. Triggers on 'get_cli not found', 'install get_cli', 'init get cli'."
 ---
 
-# 安装 GetX CLI
+# GetX CLI
 
-确保 get_cli 已安装并可用。
+Flutter GetX 框架的代码生成工具，用于快速创建页面、控制器等脚手架代码。
 
-## 安装步骤
+## 安装
 
 ```bash
-# 1. 检查是否已安装
-command -v get_cli
-
-# 2. 如果未安装，从 git 源安装
+# 从 git 源安装（官方推荐）
 dart pub global activate -s git https://github.com/jonataslaw/get_cli
 
-# 3. 确保 PATH 包含 pub-cache/bin
-export PATH="$PATH:$HOME/.pub-cache/bin"
-```
-
-## 验证
-
-```bash
+# 验证
 get_cli --version
 ```
+
+如果提示找不到命令，确保 `$HOME/.pub-cache/bin` 在 PATH 中。
+
+## 常用命令
+
+| 命令 | 说明 |
+|------|------|
+| `get create page:名称` | 创建页面（view + controller + binding） |
+| `get create controller:名称` | 创建控制器 |
+| `get init` | 在现有项目初始化 GetX 结构 |
