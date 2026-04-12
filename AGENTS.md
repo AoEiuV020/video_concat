@@ -1,2 +1,21 @@
-- **始终询问用户下一步工作**
-- **每次完成复杂任务后，按文档编写规范新建一份总结文档（每次任务独立一个文件）**
+# AGENTS.md
+
+## Commands
+
+```bash
+# 依赖
+melos bs                         # bootstrap，获取所有包的依赖
+
+# 代码生成（freezed / riverpod_generator）
+melos gen
+
+# 静态分析
+melos analyze
+
+# 测试 → 加载 flutter-test skill
+
+# 提交前格式化
+melos precommit                  # = melos fix + melos format + melos sort
+
+# 构建 → 加载 flutter-build skill
+```
