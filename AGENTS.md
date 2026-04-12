@@ -24,7 +24,7 @@ melos precommit                  # = melos fix + melos format + melos sort
 
 - **语言**: Dart 3.10+ / Flutter
 - **结构**: Dart workspace（根 `pubspec.yaml` + `workspace:` 指令）
-  - `apps/video_concat_app` — Flutter macOS 桌面应用
+  - `apps/video_concat_app` — Flutter 桌面应用
   - `packages/ffmpeg_kit` — 纯 Dart FFmpeg/FFprobe 封装库
 - **状态管理**: Riverpod + riverpod_annotation（代码生成）
 - **路由**: go_router
@@ -71,7 +71,7 @@ melos precommit                  # = melos fix + melos format + melos sort
 ## Boundaries
 
 - **禁止重编码**: 所有视频操作必须无损（lossless），不允许 re-encoding
-- **编译验证**: 提交代码前执行 `dart analyze` + `flutter test` + `flutter build macos --debug`
+- **编译验证**: 提交代码前执行 → 加载 flutter-build skill
 - **总结文档**: 完成复杂任务后在 `md/临时/` 新建总结文档（每次独立文件）
 - `md/临时/` 在 .gitignore 中，不提交
 - `md/指令/` 不可查看或修改
