@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../view_models/settings_viewmodel.dart';
+import '../../view_models/settings/settings_viewmodel.dart';
 
 /// 设置页
 class SettingsPage extends ConsumerWidget {

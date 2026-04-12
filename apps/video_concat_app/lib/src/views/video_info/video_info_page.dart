@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../utils/format_utils.dart';
-import '../../view_models/video_info_viewmodel.dart';
+import '../../view_models/video_info/video_info_viewmodel.dart';
 
 /// 视频信息页
 class VideoInfoPage extends ConsumerWidget {

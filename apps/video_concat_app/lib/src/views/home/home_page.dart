@@ -6,8 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../view_models/home_state.dart';
-import '../../view_models/home_viewmodel.dart';
+import '../../view_models/home/home_state.dart';
+import '../../view_models/home/home_viewmodel.dart';
 import 'widgets/export_options_panel.dart';
 import 'widgets/generate_output_panel.dart';
 import 'widgets/output_config_bar.dart';

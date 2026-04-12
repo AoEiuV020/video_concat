@@ -1,8 +1,8 @@
 import 'package:ffmpeg_kit/ffmpeg_kit.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../log.dart';
-import 'providers.dart';
+import '../../log.dart';
+import '../providers.dart';
 
 part 'video_info_viewmodel.g.dart';
 

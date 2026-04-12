@@ -3,10 +3,10 @@ import 'dart:async';
 import 'package:ffmpeg_kit/ffmpeg_kit.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../log.dart';
-import '../utils/keyframe_cache.dart';
-import 'home_viewmodel.dart';
-import 'providers.dart';
+import '../../log.dart';
+import '../../utils/keyframe_cache.dart';
+import '../home/home_viewmodel.dart';
+import '../providers.dart';
 import 'trim_state.dart';
 
 part 'trim_viewmodel.g.dart';

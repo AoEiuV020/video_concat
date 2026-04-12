@@ -32,6 +32,27 @@ melos precommit                  # = melos fix + melos format + melos sort
 - **日志**: logger 包（见下方约定）
 - **Lint**: flutter_lints（app）/ lints（package）
 
+## Directory Structure
+
+### App (`apps/video_concat_app/lib/src/`)
+
+| 目录 | 职责 |
+|------|------|
+| `models/` | 业务数据模型（freezed） |
+| `repositories/` | 持久化存储 |
+| `router/` | 路由配置（go_router） |
+| `utils/` | 工具函数 |
+| `view_models/` | ViewModel + State，按功能分子目录（home/trim/settings/video_info） |
+| `views/` | UI 页面和组件，按功能分子目录 |
+
+### 文档 (`md/`)
+
+| 目录 | 职责 |
+|------|------|
+| `参考/` | 与项目无关的外部知识参考（FFmpeg 命令、第三方库 API） |
+| `设计/` | 本项目的设计决策（架构、功能设计、Flutter 选型） |
+| `临时/` | 在 .gitignore 中，不提交 |
+
 ## Code Style
 
 - 使用 `prefer_relative_imports`

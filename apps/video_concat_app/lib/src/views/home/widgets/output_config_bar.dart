@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../utils/format_utils.dart';
-import '../../../view_models/home_state.dart';
-import '../../../view_models/home_viewmodel.dart';
+import '../../../view_models/home/home_state.dart';
+import '../../../view_models/home/home_viewmodel.dart';
 
 /// 输出配置栏
 class OutputConfigBar extends StatelessWidget {

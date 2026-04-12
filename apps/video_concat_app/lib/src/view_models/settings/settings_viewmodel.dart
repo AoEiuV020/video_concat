@@ -1,9 +1,9 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../log.dart';
-import '../models/models.dart';
-import 'providers.dart';
+import '../../log.dart';
+import '../../models/models.dart';
+import '../providers.dart';
 import 'settings_state.dart';
 
 part 'settings_viewmodel.g.dart';

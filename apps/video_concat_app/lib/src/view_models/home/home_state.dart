@@ -1,7 +1,7 @@
 import 'package:ffmpeg_kit/ffmpeg_kit.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-import '../models/models.dart';
+import '../../models/models.dart';
 
 part 'home_state.freezed.dart';
 

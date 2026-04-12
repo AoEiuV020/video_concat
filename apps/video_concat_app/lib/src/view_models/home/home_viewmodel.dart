@@ -3,11 +3,11 @@ import 'dart:io';
 import 'package:ffmpeg_kit/ffmpeg_kit.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../log.dart';
-import '../models/models.dart';
-import '../utils/chapter_builder.dart';
+import '../../log.dart';
+import '../../models/models.dart';
+import '../../utils/chapter_builder.dart';
+import '../providers.dart';
 import 'home_state.dart';
-import 'providers.dart';
 
 part 'home_viewmodel.g.dart';
 
