@@ -9,6 +9,7 @@ class TrimPreview extends StatelessWidget {
   final bool isLoading;
   final int currentPositionUs;
   final int? draggingPositionUs;
+  final int durationUs;
 
   const TrimPreview({
     super.key,
@@ -16,11 +17,14 @@ class TrimPreview extends StatelessWidget {
     required this.isLoading,
     required this.currentPositionUs,
     this.draggingPositionUs,
+    required this.durationUs,
   });
 
   @override
   Widget build(BuildContext context) {
     final isDragging = draggingPositionUs != null;
+    final isAtEnd = currentPositionUs == durationUs;
+    final endSuffix = isAtEnd ? ' (末尾)' : '';
     final theme = Theme.of(context);
 
     return Column(
@@ -66,7 +70,7 @@ class TrimPreview extends StatelessWidget {
                     ),
                     const SizedBox(width: 16),
                     Text(
-                      '关键帧: ${formatTimestampDisplay(currentPositionUs)}',
+                      '关键帧: ${formatTimestampDisplay(currentPositionUs)}$endSuffix',
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
@@ -74,7 +78,7 @@ class TrimPreview extends StatelessWidget {
                   ],
                 )
               : Text(
-                  '当前: ${formatTimestampDisplay(currentPositionUs)}',
+                  '当前: ${formatTimestampDisplay(currentPositionUs)}$endSuffix',
                   style: theme.textTheme.bodyMedium,
                 ),
         ),

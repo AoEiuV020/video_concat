@@ -41,6 +41,7 @@ class TrimPage extends ConsumerWidget {
                   isLoading: state.isLoadingPreview,
                   currentPositionUs: state.currentPositionUs,
                   draggingPositionUs: state.draggingPositionUs,
+                  durationUs: state.durationUs,
                 ),
                 const Divider(height: 1),
                 // 进度条 + 按钮

@@ -130,22 +130,22 @@ class TrimViewModel extends _$TrimViewModel {
 
     await _ensureCovered(positionUs);
     if (_disposed) return;
-    final nearest = _cache.findNearest(positionUs);
+    final target = _resolveSnapTarget(positionUs);
 
-    logger.d('onSliderReleased nearest=$nearest');
+    logger.d('onSliderReleased target=$target');
 
-    if (nearest == null) {
+    if (target == null) {
       state = state.copyWith(isSnapping: false, draggingPositionUs: null);
       return;
     }
 
-    // 吸附完成，跳到关键帧
+    // 吸附完成，跳到关键帧或虚拟末尾
     state = state.copyWith(
-      currentPositionUs: nearest,
+      currentPositionUs: target,
       isSnapping: false,
       draggingPositionUs: null,
     );
-    await _loadPreview(nearest);
+    await _loadPreview(target);
   }
 
   /// 拖动中调用，100ms 防抖触发关键帧预览
@@ -165,10 +165,10 @@ class TrimViewModel extends _$TrimViewModel {
     logger.d('_onDragDebounced positionUs=$positionUs');
     await _ensureCovered(positionUs);
     if (_disposed) return;
-    final nearest = _cache.findNearest(positionUs);
-    if (nearest != null) {
-      state = state.copyWith(currentPositionUs: nearest);
-      await _loadPreview(nearest);
+    final target = _resolveSnapTarget(positionUs);
+    if (target != null) {
+      state = state.copyWith(currentPositionUs: target);
+      await _loadPreview(target);
     }
   }
 
@@ -177,6 +177,23 @@ class TrimViewModel extends _$TrimViewModel {
     final current = state.currentPositionUs;
     logger.d('goToPreviousKeyframe current=$current');
     state = state.copyWith(isSnapping: true);
+
+    // 虚拟末尾 → 跳到最后关键帧
+    if (current == state.durationUs) {
+      final lastKf = _cache.findNearest(state.durationUs);
+      logger.d('goToPreviousKeyframe 从虚拟末尾 → lastKf=$lastKf');
+      if (lastKf != null) {
+        state = state.copyWith(
+          currentPositionUs: lastKf,
+          isSnapping: false,
+          draggingPositionUs: null,
+        );
+        await _loadPreview(lastKf);
+      } else {
+        state = state.copyWith(isSnapping: false, draggingPositionUs: null);
+      }
+      return;
+    }
 
     await _ensureCovered(current);
     if (_disposed) return;
@@ -210,6 +227,13 @@ class TrimViewModel extends _$TrimViewModel {
   Future<void> goToNextKeyframe() async {
     final current = state.currentPositionUs;
     logger.d('goToNextKeyframe current=$current');
+
+    // 已在虚拟末尾 → 不跳转
+    if (current == state.durationUs) {
+      logger.d('goToNextKeyframe 已在虚拟末尾');
+      return;
+    }
+
     state = state.copyWith(isSnapping: true);
 
     await _ensureCovered(current);
@@ -227,17 +251,25 @@ class TrimViewModel extends _$TrimViewModel {
       }
     }
 
-    logger.d('goToNextKeyframe next=$next');
-    if (next != null) {
+    // 无后继 → 跳到虚拟末尾
+    if (next == null) {
+      logger.d('goToNextKeyframe 无后继 → 虚拟末尾');
       state = state.copyWith(
-        currentPositionUs: next,
+        currentPositionUs: state.durationUs,
         isSnapping: false,
         draggingPositionUs: null,
       );
-      await _loadPreview(next);
-    } else {
-      state = state.copyWith(isSnapping: false, draggingPositionUs: null);
+      await _loadPreview(state.durationUs);
+      return;
     }
+
+    logger.d('goToNextKeyframe next=$next');
+    state = state.copyWith(
+      currentPositionUs: next,
+      isSnapping: false,
+      draggingPositionUs: null,
+    );
+    await _loadPreview(next);
   }
 
   /// 设置 inpoint 为当前位置
@@ -253,14 +285,15 @@ class TrimViewModel extends _$TrimViewModel {
     final current = state.currentPositionUs;
     final pending = state.pendingInpointUs;
 
-    // 最后关键帧 → 用 durationUs 使 filelist 省略 outpoint，FFmpeg 读到末尾
-    final isLastKeyframe = _cache.findNext(current) == null;
-    final outpoint = isLastKeyframe ? state.durationUs : current;
-    final outpointDts = isLastKeyframe ? null : _cache.getDts(current);
+    // 虚拟末尾 → outpoint = durationUs，filelist 省略 outpoint → EOF
+    // 普通关键帧 → 正常左闭右开
+    final isVirtualEnd = current == state.durationUs;
+    final outpoint = isVirtualEnd ? state.durationUs : current;
+    final outpointDts = isVirtualEnd ? null : _cache.getDts(current);
 
     logger.d('setOutpoint current=$current outpoint=$outpoint '
         'pending=$pending outpointDts=$outpointDts '
-        'isLastKeyframe=$isLastKeyframe');
+        'isVirtualEnd=$isVirtualEnd');
 
     if (pending != null) {
       // 有 pending inpoint → 创建新片段
@@ -339,6 +372,28 @@ class TrimViewModel extends _$TrimViewModel {
     return a.inpoint < b.outpoint && b.inpoint < a.outpoint;
   }
 
+  /// 解析吸附目标：关键帧或虚拟末尾。
+  ///
+  /// 当 [positionUs] 在最后关键帧之后且更接近 durationUs 时，
+  /// 返回 durationUs（虚拟末尾）。
+  int? _resolveSnapTarget(int positionUs) {
+    final nearest = _cache.findNearest(positionUs);
+    if (nearest == null) return null;
+
+    // 如果位置在最后关键帧之后，考虑虚拟末尾
+    if (positionUs > nearest && _cache.findNext(nearest) == null) {
+      final distToKf = positionUs - nearest;
+      final distToEnd = state.durationUs - positionUs;
+      if (distToEnd <= distToKf) {
+        logger.d('_resolveSnapTarget → 虚拟末尾 '
+            '(nearest=$nearest distToKf=$distToKf distToEnd=$distToEnd)');
+        return state.durationUs;
+      }
+    }
+
+    return nearest;
+  }
+
   /// 确保目标时间点已被关键帧缓存覆盖
   Future<void> _ensureCovered(int targetUs) async {
     if (_cache.isCovered(targetUs)) {
@@ -386,7 +441,14 @@ class TrimViewModel extends _$TrimViewModel {
   Future<void> _loadPreview(int timestampUs) async {
     if (_disposed) return;
     final gen = ++_previewGeneration;
-    logger.d('_loadPreview timestampUs=$timestampUs gen=$gen');
+
+    // 虚拟末尾 → 用最后关键帧的画面
+    final actualTs = timestampUs == state.durationUs
+        ? (_cache.findNearest(state.durationUs) ?? timestampUs)
+        : timestampUs;
+
+    logger.d('_loadPreview timestampUs=$timestampUs '
+        'actualTs=$actualTs gen=$gen');
     state = state.copyWith(isLoadingPreview: true);
     try {
       final ffmpeg = ref.read(ffmpegServiceProvider);
@@ -394,7 +456,7 @@ class TrimViewModel extends _$TrimViewModel {
 
       final bytes = await ffmpeg.extractFrame(
         filePath: state.filePath,
-        timestampUs: timestampUs,
+        timestampUs: actualTs,
         isHdr: _isHdr,
       );
       if (_disposed || gen != _previewGeneration) return;
