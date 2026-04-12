@@ -8,16 +8,25 @@ String formatFileSize(int bytes) {
   return '${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(2)} GB';
 }
 
-/// 格式化秒数为 HH:MM:SS
+/// 格式化秒数为 MM:SS.mmm 或 HH:MM:SS.mmm
 String formatDuration(double seconds) {
-  final duration = Duration(milliseconds: (seconds * 1000).round());
-  final h = duration.inHours;
-  final m = duration.inMinutes.remainder(60);
-  final s = duration.inSeconds.remainder(60);
+  final totalMs = (seconds * 1000).round();
+  final ms = totalMs % 1000;
+  final totalSec = totalMs ~/ 1000;
+  final s = totalSec % 60;
+  final totalMin = totalSec ~/ 60;
+  final m = totalMin % 60;
+  final h = totalMin ~/ 60;
 
-  if (h > 0) return '${h}h ${_pad(m)}m ${_pad(s)}s';
-  if (m > 0) return '${m}m ${_pad(s)}s';
-  return '${s}s';
+  final msStr = ms.toString().padLeft(3, '0');
+  final secStr = _pad(s);
+  final minStr = _pad(m);
+
+  if (h > 0) {
+    final hourStr = _pad(h);
+    return '$hourStr:$minStr:$secStr.$msStr';
+  }
+  return '$minStr:$secStr.$msStr';
 }
 
 /// 格式化码率

@@ -26,6 +26,8 @@ dependencies:
   freezed_annotation: ^3.0.0
   # 内部模块
   ffmpeg_kit: ^1.0.0
+  # 日志
+  logger: ^2.6.2
 
 dev_dependencies:
   flutter_test:

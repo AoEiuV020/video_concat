@@ -4,6 +4,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../views/home/home_page.dart';
 import '../views/settings/settings_page.dart';
+import '../views/trim/trim_page.dart';
 import '../views/video_info/video_info_page.dart';
 
 part 'app_router.g.dart';
@@ -21,6 +22,13 @@ GoRouter appRouter(Ref ref) {
       GoRoute(
         path: '/settings',
         builder: (context, state) => const SettingsPage(),
+      ),
+      GoRoute(
+        path: '/trim',
+        builder: (context, state) {
+          final videoId = state.uri.queryParameters['id'] ?? '';
+          return TrimPage(videoId: videoId);
+        },
       ),
       GoRoute(
         path: '/video-info',

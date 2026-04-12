@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:ffmpeg_kit/ffmpeg_kit.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../log.dart';
 import '../models/models.dart';
 import '../utils/chapter_builder.dart';
 import 'home_state.dart';
@@ -23,42 +24,54 @@ class HomeViewModel extends _$HomeViewModel {
   }
 
   Future<void> _loadPreferences() async {
-    final prefs = ref.read(preferencesRepositoryProvider);
-    final ext = await prefs.getLastExtension();
-    final exportOptions = await prefs.loadExportOptions();
-    state = state.copyWith(
-      outputConfig: state.outputConfig.copyWith(extension: ext),
-      exportOptions: exportOptions,
-    );
+    try {
+      final prefs = ref.read(preferencesRepositoryProvider);
+      final ext = await prefs.getLastExtension();
+      final exportOptions = await prefs.loadExportOptions();
+      state = state.copyWith(
+        outputConfig: state.outputConfig.copyWith(extension: ext),
+        exportOptions: exportOptions,
+      );
+      logger.d('偏好加载完成 ext=$ext exportOptions=$exportOptions');
+    } catch (e, s) {
+      logger.e('偏好加载失败', error: e, stackTrace: s);
+    }
   }
 
   /// 添加视频文件
   Future<void> addVideos(List<String> filePaths) async {
-    final newItems = <VideoItem>[];
-    for (final path in filePaths) {
-      final file = File(path);
-      final fileName = path.split('/').last.split('\\').last;
-      final fileSize = await file.length();
-      newItems.add(VideoItem(
-        id: DateTime.now().microsecondsSinceEpoch.toString() +
-            filePaths.indexOf(path).toString(),
-        filePath: path,
-        fileName: fileName,
-        fileSize: fileSize,
-      ));
+    logger.d('addVideos ${filePaths.length} 个文件');
+    try {
+      final newItems = <VideoItem>[];
+      for (final path in filePaths) {
+        final file = File(path);
+        final fileName = path.split('/').last.split('\\').last;
+        final fileSize = await file.length();
+        newItems.add(VideoItem(
+          id: DateTime.now().microsecondsSinceEpoch.toString() +
+              filePaths.indexOf(path).toString(),
+          filePath: path,
+          fileName: fileName,
+          fileSize: fileSize,
+        ));
+      }
+
+      final items = [...state.videoItems, ...newItems];
+      state = state.copyWith(
+        videoItems: items,
+        outputConfig: _updateBaseName(items, state.outputConfig),
+      );
+      logger.d('addVideos 完成 总数=${items.length}');
+
+      _checkAndProbe();
+    } catch (e, s) {
+      logger.e('addVideos 失败', error: e, stackTrace: s);
     }
-
-    final items = [...state.videoItems, ...newItems];
-    state = state.copyWith(
-      videoItems: items,
-      outputConfig: _updateBaseName(items, state.outputConfig),
-    );
-
-    _checkAndProbe();
   }
 
   /// 删除视频
   void removeVideo(String id) {
+    logger.d('removeVideo id=$id');
     final items = state.videoItems.where((v) => v.id != id).toList();
     state = state.copyWith(
       videoItems: items,
@@ -70,6 +83,7 @@ class HomeViewModel extends _$HomeViewModel {
 
   /// 重新排序
   void reorderVideo(int oldIndex, int newIndex) {
+    logger.d('reorderVideo $oldIndex -> $newIndex');
     final items = [...state.videoItems];
     if (newIndex > oldIndex) newIndex--;
     final item = items.removeAt(oldIndex);
@@ -88,17 +102,24 @@ class HomeViewModel extends _$HomeViewModel {
 
   /// 更新输出后缀
   Future<void> updateOutputExtension(String extension) async {
-    state = state.copyWith(
-      outputConfig: state.outputConfig.copyWith(extension: extension),
-    );
-    await ref.read(preferencesRepositoryProvider).saveLastExtension(extension);
-
-    // 切换到不支持快速启动的格式时自动关闭
-    final isMp4Like = extension == 'mp4' || extension == 'mov';
-    if (!isMp4Like && state.exportOptions.fastStart) {
+    logger.d('updateOutputExtension ext=$extension');
+    try {
       state = state.copyWith(
-        exportOptions: state.exportOptions.copyWith(fastStart: false),
+        outputConfig: state.outputConfig.copyWith(extension: extension),
       );
+      await ref
+          .read(preferencesRepositoryProvider)
+          .saveLastExtension(extension);
+
+      // 切换到不支持快速启动的格式时自动关闭
+      final isMp4Like = extension == 'mp4' || extension == 'mov';
+      if (!isMp4Like && state.exportOptions.fastStart) {
+        state = state.copyWith(
+          exportOptions: state.exportOptions.copyWith(fastStart: false),
+        );
+      }
+    } catch (e, s) {
+      logger.e('updateOutputExtension 失败', error: e, stackTrace: s);
     }
   }
 
@@ -130,12 +151,30 @@ class HomeViewModel extends _$HomeViewModel {
     return config.copyWith(baseName: '${nameWithoutExt}_merged');
   }
 
+  /// 设置视频的裁剪配置
+  void setTrimConfig(String videoId, TrimConfig? config) {
+    logger.d('setTrimConfig videoId=$videoId '
+        'segments=${config?.segments.length ?? 0}');
+    final items = state.videoItems.map((v) {
+      if (v.id == videoId) return v.copyWith(trimConfig: config);
+      return v;
+    }).toList();
+    state = state.copyWith(videoItems: items);
+  }
+
   /// 开始生成
   Future<void> startGenerate(String outputPath) async {
+    logger.i('startGenerate outputPath=$outputPath '
+        'videos=${state.videoItems.length}');
+
     // 保存导出选项（remember 开关始终保存）
-    await ref
-        .read(preferencesRepositoryProvider)
-        .saveExportOptions(state.exportOptions);
+    try {
+      await ref
+          .read(preferencesRepositoryProvider)
+          .saveExportOptions(state.exportOptions);
+    } catch (e, s) {
+      logger.e('保存导出选项失败', error: e, stackTrace: s);
+    }
 
     state = state.copyWith(
       isGenerating: true,
@@ -151,19 +190,29 @@ class HomeViewModel extends _$HomeViewModel {
       outputExtension: state.outputConfig.extension,
     );
     final preInputArgs = state.exportOptions.toPreInputArgs();
+    logger.d('extraArgs=$extraArgs preInputArgs=$preInputArgs');
 
     try {
       // 构建章节信息（需要 ffprobe 获取每个视频时长）
       List<ChapterInfo>? chapters;
       if (state.exportOptions.addChapters) {
+        logger.d('构建章节信息...');
         chapters = await buildChapters(
           ffprobe: _getFfprobeService(),
           items: state.videoItems,
         );
+        logger.d('章节数=${chapters?.length}');
       }
 
+      final entries = state.videoItems.map((v) => ConcatEntry(
+        filePath: v.filePath,
+        trimConfig: v.trimConfig,
+        durationUs: v.durationUs,
+      )).toList();
+      logger.d('entries=${entries.length}');
+
       final exitCode = await service.concat(
-        inputPaths: state.videoItems.map((v) => v.filePath).toList(),
+        entries: entries,
         outputPath: outputPath,
         preInputArguments: preInputArgs,
         extraArguments: extraArgs,
@@ -184,6 +233,8 @@ class HomeViewModel extends _$HomeViewModel {
           ? GenerateState.cancelled
           : (exitCode == 0 ? GenerateState.success : GenerateState.failed);
 
+      logger.i('生成完成 resultState=$resultState exitCode=$exitCode');
+
       state = state.copyWith(
         isGenerating: false,
         generateResult: GenerateResult(
@@ -194,7 +245,8 @@ class HomeViewModel extends _$HomeViewModel {
               : null,
         ),
       );
-    } catch (e) {
+    } catch (e, s) {
+      logger.e('startGenerate 异常', error: e, stackTrace: s);
       state = state.copyWith(
         isGenerating: false,
         generateResult: GenerateResult(
@@ -208,6 +260,7 @@ class HomeViewModel extends _$HomeViewModel {
 
   /// 中断生成
   void cancelGenerate() {
+    logger.i('cancelGenerate');
     ref.read(videoConcatServiceProvider).cancel();
   }
 
@@ -218,6 +271,7 @@ class HomeViewModel extends _$HomeViewModel {
 
   /// 重置所有状态，开始新任务
   void reset() {
+    logger.d('reset');
     _referenceFilePath = null;
     state = const HomeState();
     _loadPreferences();
@@ -244,14 +298,30 @@ class HomeViewModel extends _$HomeViewModel {
 
   /// 探测所有视频。
   Future<void> _probeAll(String refPath, List<VideoItem> items) async {
+    logger.d('_probeAll refPath=$refPath items=${items.length}');
     ProbeResult refResult;
     try {
       refResult = await _getFfprobeService().probe(refPath);
-    } catch (_) {
+    } catch (e, s) {
+      logger.e('探测参考视频失败 path=$refPath', error: e, stackTrace: s);
       return;
     }
     if (_referenceFilePath != refPath) return;
-    state = state.copyWith(referenceResult: refResult);
+
+    // 更新首视频时长
+    final durationUs = (refResult.format.duration * 1000000).round();
+    logger.d('参考视频 durationUs=$durationUs');
+    final updatedItems = state.videoItems.map((v) {
+      if (v.filePath == refPath && v.durationUs == null) {
+        return v.copyWith(durationUs: durationUs);
+      }
+      return v;
+    }).toList();
+
+    state = state.copyWith(
+      referenceResult: refResult,
+      videoItems: updatedItems,
+    );
 
     for (final item in items.skip(1)) {
       await _probeAndCompare(item, refResult);
@@ -277,13 +347,31 @@ class HomeViewModel extends _$HomeViewModel {
     ProbeResult refResult,
   ) async {
     bool compatible;
+    int? durationUs;
     try {
       final result = await _getFfprobeService().probe(item.filePath);
       compatible = _comparer.compare(refResult, result).isCompatible;
-    } catch (_) {
+      durationUs = (result.format.duration * 1000000).round();
+      logger.d('探测 ${item.fileName} compatible=$compatible '
+          'durationUs=$durationUs');
+    } catch (e, s) {
+      logger.e('探测失败 ${item.fileName}', error: e, stackTrace: s);
       compatible = false;
     }
+
+    // 更新视频时长
+    var updatedItems = state.videoItems;
+    if (durationUs != null) {
+      updatedItems = updatedItems.map((v) {
+        if (v.id == item.id && v.durationUs == null) {
+          return v.copyWith(durationUs: durationUs);
+        }
+        return v;
+      }).toList();
+    }
+
     state = state.copyWith(
+      videoItems: updatedItems,
       videoCompatibility: {...state.videoCompatibility, item.id: compatible},
     );
   }
