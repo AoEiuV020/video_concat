@@ -1,12 +1,14 @@
 import 'dart:async';
 
 import 'package:ffmpeg_kit/ffmpeg_kit.dart';
+import 'package:media_kit/media_kit.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../log.dart';
 import '../../utils/keyframe_cache.dart';
 import '../home/home_viewmodel.dart';
 import '../providers.dart';
+import 'trim_player_provider.dart';
 import 'trim_state.dart';
 
 part 'trim_viewmodel.g.dart';
@@ -17,17 +19,12 @@ class TrimViewModel extends _$TrimViewModel {
   late KeyframeCache _cache;
   Timer? _debounceTimer;
   bool _disposed = false;
-  bool _isHdr = false;
-  int _previewGeneration = 0;
   int _snapGeneration = 0;
+  StreamSubscription<Duration>? _positionSub;
+  StreamSubscription<bool>? _completedSub;
 
-  /// 默认查询窗口（微秒）：10秒
   static const _defaultWindowUs = 10000000;
-
-  /// 最大窗口（微秒）：30秒
   static const _maxWindowUs = 30000000;
-
-  /// 最大重试次数
   static const _maxRetries = 3;
 
   @override
@@ -36,6 +33,8 @@ class TrimViewModel extends _$TrimViewModel {
     ref.onDispose(() {
       _disposed = true;
       _debounceTimer?.cancel();
+      _positionSub?.cancel();
+      _completedSub?.cancel();
     });
 
     final homeState = ref.read(homeViewModelProvider);
@@ -81,22 +80,15 @@ class TrimViewModel extends _$TrimViewModel {
   Future<void> _init() async {
     logger.d('_init 开始');
 
-    // 探测视频是否为 HDR
-    try {
-      final ffprobe = _getFfprobeService();
-      final probeResult = await ffprobe.probe(state.filePath);
-      if (_disposed) return;
-      final videoStream = probeResult.streams.where((s) => s.isVideo).firstOrNull;
-      if (videoStream != null) {
-        _isHdr = videoStream.isHdr;
-        logger.d('_init isHdr=$_isHdr '
-            'colorTransfer=${videoStream.colorTransfer}');
-      }
-    } catch (e) {
-      logger.w('_init HDR 探测失败: $e');
-    }
+    // 在 Player 中打开视频（暂停状态）
+    final player = ref.read(trimPlayerProvider(state.videoId));
+    await player.open(Media(state.filePath), play: false);
+    if (_disposed) return;
 
-    // 加载初始位置（0）附近的关键帧
+    // 设置播放器流监听
+    _setupPlayerListeners(player);
+
+    // 加载初始位置附近的关键帧
     await _ensureCovered(0);
     if (_disposed) return;
     final nearest = _cache.findNearest(0);
@@ -109,14 +101,84 @@ class TrimViewModel extends _$TrimViewModel {
       currentPositionUs: nearest ?? 0,
     );
 
-    // 加载首帧预览
-    if (nearest != null) {
-      await _loadPreview(nearest);
-    } else {
-      logger.w('_init 无关键帧，跳过预览');
+    // 跳到首个关键帧
+    if (nearest != null && nearest > 0) {
+      await _seekPlayer(nearest);
     }
 
     logger.d('_init 完成');
+  }
+
+  void _setupPlayerListeners(Player player) {
+    // 播放中持续同步滑块位置
+    _positionSub = player.stream.position.listen((position) {
+      if (!_disposed && state.isPlaying && state.draggingPositionUs == null) {
+        state = state.copyWith(
+          currentPositionUs: position.inMicroseconds,
+        );
+      }
+    });
+
+    // 播放结束时停在虚拟末尾
+    _completedSub = player.stream.completed.listen((completed) {
+      if (!_disposed && completed) {
+        logger.d('播放到达末尾');
+        state = state.copyWith(
+          isPlaying: false,
+          currentPositionUs: state.durationUs,
+        );
+      }
+    });
+  }
+
+  /// 跳转播放器到指定时间点
+  Future<void> _seekPlayer(int timestampUs) async {
+    if (_disposed) return;
+    final player = ref.read(trimPlayerProvider(state.videoId));
+
+    // 虚拟末尾 → 跳到最后实际关键帧
+    final actualTs = timestampUs == state.durationUs
+        ? (_cache.findNearest(state.durationUs) ?? timestampUs)
+        : timestampUs;
+
+    logger.d('_seekPlayer timestampUs=$timestampUs actualTs=$actualTs');
+    await player.seek(Duration(microseconds: actualTs));
+  }
+
+  /// 切换播放/暂停
+  Future<void> togglePlayPause() async {
+    final player = ref.read(trimPlayerProvider(state.videoId));
+
+    if (state.isPlaying) {
+      // 暂停 → 吸附到最近关键帧
+      await player.pause();
+      state = state.copyWith(isPlaying: false);
+
+      final pos = player.state.position.inMicroseconds;
+      state = state.copyWith(isSnapping: true);
+
+      await _ensureCovered(pos);
+      if (_disposed) return;
+      final target = _resolveSnapTarget(pos);
+
+      if (target != null) {
+        state = state.copyWith(
+          currentPositionUs: target,
+          isSnapping: false,
+        );
+        await _seekPlayer(target);
+      } else {
+        state = state.copyWith(isSnapping: false);
+      }
+    } else {
+      // 在末尾时从头播放
+      if (state.currentPositionUs >= state.durationUs) {
+        await player.seek(Duration.zero);
+        state = state.copyWith(currentPositionUs: 0);
+      }
+      await player.play();
+      state = state.copyWith(isPlaying: true);
+    }
   }
 
   /// 滑块松开时调用
@@ -148,18 +210,29 @@ class TrimViewModel extends _$TrimViewModel {
       isSnapping: false,
       draggingPositionUs: null,
     );
-    await _loadPreview(target);
+    await _seekPlayer(target);
   }
 
-  /// 拖动中调用，100ms 防抖触发关键帧预览
+  /// 拖动中调用，即时跳转播放器 + 100ms 防抖触发关键帧信息更新
   void onSliderDragging(int positionUs) {
-    _previewGeneration++;
     _snapGeneration++;
     state = state.copyWith(
       draggingPositionUs: positionUs,
-      isLoadingPreview: false,
       isSnapping: false,
     );
+
+    // 拖动时暂停播放
+    if (state.isPlaying) {
+      ref.read(trimPlayerProvider(state.videoId)).pause();
+      state = state.copyWith(isPlaying: false);
+    }
+
+    // 即时跳转播放器（拖动中实时预览）
+    ref.read(trimPlayerProvider(state.videoId)).seek(
+      Duration(microseconds: positionUs),
+    );
+
+    // 防抖更新关键帧吸附信息
     _debounceTimer?.cancel();
     _debounceTimer = Timer(const Duration(milliseconds: 100), () {
       _onDragDebounced(positionUs);
@@ -173,7 +246,6 @@ class TrimViewModel extends _$TrimViewModel {
     final target = _resolveSnapTarget(positionUs);
     if (target != null) {
       state = state.copyWith(currentPositionUs: target);
-      await _loadPreview(target);
     }
   }
 
@@ -192,7 +264,7 @@ class TrimViewModel extends _$TrimViewModel {
           currentPositionUs: lastKf,
           draggingPositionUs: null,
         );
-        await _loadPreview(lastKf);
+        await _seekPlayer(lastKf);
       }
       return;
     }
@@ -206,7 +278,7 @@ class TrimViewModel extends _$TrimViewModel {
           currentPositionUs: prev,
           draggingPositionUs: null,
         );
-        await _loadPreview(prev);
+        await _seekPlayer(prev);
         return;
       }
     }
@@ -236,7 +308,7 @@ class TrimViewModel extends _$TrimViewModel {
         isSnapping: false,
         draggingPositionUs: null,
       );
-      await _loadPreview(prev);
+      await _seekPlayer(prev);
     } else {
       state = state.copyWith(isSnapping: false, draggingPositionUs: null);
     }
@@ -264,7 +336,7 @@ class TrimViewModel extends _$TrimViewModel {
           currentPositionUs: next,
           draggingPositionUs: null,
         );
-        await _loadPreview(next);
+        await _seekPlayer(next);
         return;
       }
       // 无后继且已覆盖到末尾 → 虚拟末尾
@@ -276,7 +348,7 @@ class TrimViewModel extends _$TrimViewModel {
             currentPositionUs: state.durationUs,
             draggingPositionUs: null,
           );
-          await _loadPreview(state.durationUs);
+          await _seekPlayer(state.durationUs);
           return;
         }
       }
@@ -308,7 +380,7 @@ class TrimViewModel extends _$TrimViewModel {
         isSnapping: false,
         draggingPositionUs: null,
       );
-      await _loadPreview(state.durationUs);
+      await _seekPlayer(state.durationUs);
       return;
     }
 
@@ -318,7 +390,7 @@ class TrimViewModel extends _$TrimViewModel {
       isSnapping: false,
       draggingPositionUs: null,
     );
-    await _loadPreview(next);
+    await _seekPlayer(next);
   }
 
   /// 设置 inpoint 为当前位置
@@ -484,47 +556,6 @@ class TrimViewModel extends _$TrimViewModel {
       windowUs = (windowUs * 2).clamp(0, _maxWindowUs);
     }
     logger.w('_ensureCovered $_maxRetries次重试后仍无关键帧');
-  }
-
-  /// 加载预览图
-  Future<void> _loadPreview(int timestampUs) async {
-    if (_disposed) return;
-    final gen = ++_previewGeneration;
-
-    // 虚拟末尾 → 用最后关键帧的画面
-    final actualTs = timestampUs == state.durationUs
-        ? (_cache.findNearest(state.durationUs) ?? timestampUs)
-        : timestampUs;
-
-    logger.d('_loadPreview timestampUs=$timestampUs '
-        'actualTs=$actualTs gen=$gen');
-    state = state.copyWith(isLoadingPreview: true);
-    try {
-      final ffmpeg = ref.read(ffmpegServiceProvider);
-      logger.d('ffmpeg路径=${ffmpeg.ffmpegPath}');
-
-      final bytes = await ffmpeg.extractFrame(
-        filePath: state.filePath,
-        timestampUs: actualTs,
-        isHdr: _isHdr,
-      );
-      if (_disposed || gen != _previewGeneration) return;
-
-      logger.d('extractFrame 返回 '
-          '${bytes != null ? "${bytes.length} bytes" : "null"}');
-
-      state = state.copyWith(
-        previewImage: bytes,
-        isLoadingPreview: false,
-      );
-    } catch (e) {
-      if (_disposed || gen != _previewGeneration) return;
-      logger.e('_loadPreview 异常', error: e);
-      state = state.copyWith(
-        isLoadingPreview: false,
-        errorMessage: '预览加载失败: $e',
-      );
-    }
   }
 
   FFprobeService _getFfprobeService() {
