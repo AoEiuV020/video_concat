@@ -11,6 +11,7 @@ void main() {
         MaterialApp(
           home: Scaffold(
             body: VideoInfoContent(
+              filePath: '/videos/sample.mp4',
               data: VideoInfoData(result: _videoProbeResult),
               playbackPreview: const SizedBox(key: Key('preview')),
             ),
@@ -33,6 +34,7 @@ void main() {
         MaterialApp(
           home: Scaffold(
             body: VideoInfoContent(
+              filePath: '/videos/sample.m4a',
               data: VideoInfoData(result: _audioOnlyProbeResult),
             ),
           ),

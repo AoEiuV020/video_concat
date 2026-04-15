@@ -7,10 +7,16 @@ import 'video_info_playback_section.dart';
 
 /// 视频信息页 loaded 态内容。
 class VideoInfoContent extends StatelessWidget {
+  final String filePath;
   final VideoInfoData data;
   final Widget? playbackPreview;
 
-  const VideoInfoContent({super.key, required this.data, this.playbackPreview});
+  const VideoInfoContent({
+    super.key,
+    required this.filePath,
+    required this.data,
+    this.playbackPreview,
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -29,7 +29,7 @@ class VideoInfoPage extends ConsumerWidget {
             ),
           ),
         ),
-        data: (data) => VideoInfoContent(data: data),
+        data: (data) => VideoInfoContent(filePath: filePath, data: data),
       ),
     );
   }
