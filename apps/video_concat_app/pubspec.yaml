@@ -24,6 +24,11 @@ dependencies:
   desktop_drop: ^0.7.0
   # freezed
   freezed_annotation: ^3.0.0
+  # 视频播放
+  media_kit: ^1.2.6
+  media_kit_video: ^2.0.1
+  media_kit_libs_video: ^1.0.7
+  media_kit_native_event_loop: ^1.0.1
   # 内部模块
   ffmpeg_kit: ^1.0.0
   # 日志
