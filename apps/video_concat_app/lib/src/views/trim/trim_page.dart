@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../view_models/trim/trim_playback_binding_provider.dart';
 import '../../view_models/trim/trim_viewmodel.dart';
 import 'widgets/segment_list.dart';
 import 'widgets/trim_preview.dart';
@@ -14,6 +15,7 @@ class TrimPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(trimPlaybackBindingProvider(videoId));
     final state = ref.watch(trimViewModelProvider(videoId));
     final vm = ref.read(trimViewModelProvider(videoId).notifier);
 
@@ -34,16 +36,16 @@ class TrimPage extends ConsumerWidget {
           ? const Center(child: CircularProgressIndicator())
           : Column(
               children: [
-                // 预览区
+                // 视频预览区
                 TrimPreview(
-                  previewImage: state.previewImage,
-                  isLoading: state.isLoadingPreview,
+                  videoId: videoId,
                   currentPositionUs: state.currentPositionUs,
                   draggingPositionUs: state.draggingPositionUs,
                   durationUs: state.durationUs,
+                  isPreviewPending: state.isPreviewPending,
                 ),
                 const Divider(height: 1),
-                // 进度条 + 按钮
+                // 进度条 + 播放/暂停 + 导航按钮
                 Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,
@@ -56,10 +58,12 @@ class TrimPage extends ConsumerWidget {
                     inpointUs: state.pendingInpointUs ?? 0,
                     segments: state.segments,
                     isButtonsDisabled: state.isTimeUnresolved,
+                    isPlaying: state.isPlaying,
                     onChanged: (us) => vm.onSliderDragging(us),
                     onChangeEnd: (us) => vm.onSliderReleased(us),
                     onPrevious: () => vm.goToPreviousKeyframe(),
                     onNext: () => vm.goToNextKeyframe(),
+                    onTogglePlayPause: () => vm.togglePlayPause(),
                   ),
                 ),
                 Padding(

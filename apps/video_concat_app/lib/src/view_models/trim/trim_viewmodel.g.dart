@@ -61,7 +61,7 @@ final class TrimViewModelProvider
   }
 }
 
-String _$trimViewModelHash() => r'740be3717733eef8e25d0e3e851104a08f93a7d0';
+String _$trimViewModelHash() => r'5519a24aad77ad21f5e19113b972371485e07d60';
 
 /// 裁剪页面 ViewModel
 

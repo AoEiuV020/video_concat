@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:ffmpeg_kit/ffmpeg_kit.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
@@ -38,11 +36,14 @@ abstract class TrimState with _$TrimState {
     /// 已选片段列表
     @Default([]) List<TrimSegment> segments,
 
-    /// 预览图字节数据
-    Uint8List? previewImage,
+    /// 是否正在播放
+    @Default(false) bool isPlaying,
 
-    /// 是否正在加载预览
-    @Default(false) bool isLoadingPreview,
+    /// 关键帧已确定，但播放器画面尚未跳到目标位置
+    @Default(false) bool isPreviewPending,
+
+    /// 当前等待播放器追上的目标位置
+    int? pendingPreviewTargetUs,
 
     /// 是否正在加载（初始化中）
     @Default(true) bool isLoading,
@@ -54,5 +55,6 @@ abstract class TrimState with _$TrimState {
   /// 当前时间不可用（未吸附到关键帧），拖动中和吸附中都属此状态。
   ///
   /// 此状态下 prev/next 和 In/Out 按钮禁用。
-  bool get isTimeUnresolved => isSnapping || draggingPositionUs != null;
+  bool get isTimeUnresolved =>
+      isPlaying || isSnapping || draggingPositionUs != null;
 }
