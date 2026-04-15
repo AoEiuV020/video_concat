@@ -9,10 +9,12 @@ class TrimSlider extends StatelessWidget {
   final int inpointUs;
   final List<TrimSegment> segments;
   final bool isButtonsDisabled;
+  final bool isPlaying;
   final ValueChanged<int> onChanged;
   final ValueChanged<int> onChangeEnd;
   final VoidCallback onPrevious;
   final VoidCallback onNext;
+  final VoidCallback onTogglePlayPause;
 
   const TrimSlider({
     super.key,
@@ -22,10 +24,12 @@ class TrimSlider extends StatelessWidget {
     required this.inpointUs,
     required this.segments,
     this.isButtonsDisabled = false,
+    this.isPlaying = false,
     required this.onChanged,
     required this.onChangeEnd,
     required this.onPrevious,
     required this.onNext,
+    required this.onTogglePlayPause,
   });
 
   @override
@@ -44,6 +48,11 @@ class TrimSlider extends StatelessWidget {
               onPressed: isButtonsDisabled ? null : onPrevious,
               icon: const Icon(Icons.skip_previous),
               tooltip: '上一个关键帧',
+            ),
+            IconButton(
+              onPressed: onTogglePlayPause,
+              icon: Icon(isPlaying ? Icons.pause : Icons.play_arrow),
+              tooltip: isPlaying ? '暂停' : '播放',
             ),
             Expanded(
               child: Slider(
