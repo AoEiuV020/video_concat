@@ -1,27 +1,28 @@
-import 'dart:typed_data';
-
 import 'package:ffmpeg_kit/ffmpeg_kit.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:media_kit_video/media_kit_video.dart';
 
-/// 关键帧预览区域
-class TrimPreview extends StatelessWidget {
-  final Uint8List? previewImage;
-  final bool isLoading;
+import '../../../view_models/trim/trim_player_provider.dart';
+
+/// 视频预览区域
+class TrimPreview extends ConsumerWidget {
+  final String videoId;
   final int currentPositionUs;
   final int? draggingPositionUs;
   final int durationUs;
 
   const TrimPreview({
     super.key,
-    this.previewImage,
-    required this.isLoading,
+    required this.videoId,
     required this.currentPositionUs,
     this.draggingPositionUs,
     required this.durationUs,
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final controller = ref.watch(trimVideoControllerProvider(videoId));
     final isDragging = draggingPositionUs != null;
     final isAtEnd = currentPositionUs == durationUs;
     final endSuffix = isAtEnd ? ' (末尾)' : '';
@@ -31,31 +32,9 @@ class TrimPreview extends StatelessWidget {
       children: [
         SizedBox(
           height: 240,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              if (previewImage != null)
-                Image.memory(
-                  previewImage!,
-                  fit: BoxFit.contain,
-                  gaplessPlayback: true,
-                )
-              else
-                const Icon(Icons.image, size: 64, color: Colors.grey),
-              if (isLoading)
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.black38,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
-                ),
-            ],
+          child: Video(
+            controller: controller,
+            controls: NoVideoControls,
           ),
         ),
         Padding(
