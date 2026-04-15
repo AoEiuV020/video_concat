@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:ffmpeg_kit/ffmpeg_kit.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
@@ -38,11 +36,8 @@ abstract class TrimState with _$TrimState {
     /// 已选片段列表
     @Default([]) List<TrimSegment> segments,
 
-    /// 预览图字节数据
-    Uint8List? previewImage,
-
-    /// 是否正在加载预览
-    @Default(false) bool isLoadingPreview,
+    /// 是否正在播放
+    @Default(false) bool isPlaying,
 
     /// 是否正在加载（初始化中）
     @Default(true) bool isLoading,
