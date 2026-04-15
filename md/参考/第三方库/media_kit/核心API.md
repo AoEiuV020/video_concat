@@ -38,6 +38,8 @@ await player.open(Playlist([
 ], index: 0));
 ```
 
+`play: false` 适合“打开即显示预览，但由用户手动点击播放”的场景。
+
 ### 播放控制
 
 | 方法 | 说明 |
@@ -172,6 +174,15 @@ player.stream.completed.listen((completed) {
     print('Playback completed');
   }
 });
+```
+
+### 普通播放器常见组合
+
+```dart
+final player = Player();
+await player.open(Media('/path/to/video.mp4'), play: false);
+
+final controller = VideoController(player);
 ```
 
 ## Media

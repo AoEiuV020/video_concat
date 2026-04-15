@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../../utils/format_utils.dart';
 import '../../../view_models/video_info/video_info_viewmodel.dart';
+import 'video_info_playback_surface.dart';
 import 'video_info_playback_section.dart';
 
 /// 视频信息页 loaded 态内容。
@@ -30,7 +31,9 @@ class VideoInfoContent extends StatelessWidget {
           _buildWarningBanner(data.compareResult!),
         VideoInfoPlaybackSection(
           hasVideoStream: hasVideoStream,
-          preview: hasVideoStream ? playbackPreview : null,
+          preview: hasVideoStream
+              ? (playbackPreview ?? VideoInfoPlaybackSurface(filePath: filePath))
+              : null,
         ),
         const SizedBox(height: 12),
         _buildFormatCard(context, data.result.format),
