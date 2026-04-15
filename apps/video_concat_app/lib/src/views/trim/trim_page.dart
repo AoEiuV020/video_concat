@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../view_models/trim/trim_playback_binding_provider.dart';
 import '../../view_models/trim/trim_viewmodel.dart';
 import 'widgets/segment_list.dart';
 import 'widgets/trim_preview.dart';
@@ -14,6 +15,7 @@ class TrimPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(trimPlaybackBindingProvider(videoId));
     final state = ref.watch(trimViewModelProvider(videoId));
     final vm = ref.read(trimViewModelProvider(videoId).notifier);
 

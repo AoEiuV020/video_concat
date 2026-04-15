@@ -21,6 +21,8 @@ class TrimViewModel extends _$TrimViewModel {
   bool _disposed = false;
   int _snapGeneration = 0;
   StreamSubscription<Duration>? _positionSub;
+  StreamSubscription<bool>? _playingSub;
+  StreamSubscription<String>? _errorSub;
   StreamSubscription<bool>? _completedSub;
 
   static const _defaultWindowUs = 10000000;
@@ -34,6 +36,8 @@ class TrimViewModel extends _$TrimViewModel {
       _disposed = true;
       _debounceTimer?.cancel();
       _positionSub?.cancel();
+      _playingSub?.cancel();
+      _errorSub?.cancel();
       _completedSub?.cancel();
     });
 
@@ -82,8 +86,10 @@ class TrimViewModel extends _$TrimViewModel {
 
     // 在 Player 中打开视频（暂停状态）
     final player = ref.read(trimPlayerProvider(state.videoId));
+    logger.i('打开裁剪媒体 videoId=${state.videoId} filePath=${state.filePath}');
     await player.open(Media(state.filePath), play: false);
     if (_disposed) return;
+    logger.i('打开裁剪媒体完成 videoId=${state.videoId}');
 
     // 设置播放器流监听
     _setupPlayerListeners(player);
@@ -119,10 +125,27 @@ class TrimViewModel extends _$TrimViewModel {
       }
     });
 
+    _playingSub = player.stream.playing.listen((playing) {
+      if (_disposed) return;
+      if (state.isPlaying != playing) {
+        logger.i('播放器播放状态变化 videoId=${state.videoId} playing=$playing');
+        state = state.copyWith(isPlaying: playing);
+      }
+    });
+
+    _errorSub = player.stream.error.listen((error) {
+      if (_disposed) return;
+      logger.e('播放器错误 videoId=${state.videoId}', error: error);
+      state = state.copyWith(
+        isPlaying: false,
+        errorMessage: '播放器错误: $error',
+      );
+    });
+
     // 播放结束时停在虚拟末尾
     _completedSub = player.stream.completed.listen((completed) {
       if (!_disposed && completed) {
-        logger.d('播放到达末尾');
+        logger.i('播放到达末尾 videoId=${state.videoId}');
         state = state.copyWith(
           isPlaying: false,
           currentPositionUs: state.durationUs,
@@ -150,6 +173,7 @@ class TrimViewModel extends _$TrimViewModel {
     final player = ref.read(trimPlayerProvider(state.videoId));
 
     if (state.isPlaying) {
+      logger.i('请求暂停裁剪播放器 videoId=${state.videoId}');
       // 暂停 → 吸附到最近关键帧
       await player.pause();
       state = state.copyWith(isPlaying: false);
@@ -171,6 +195,7 @@ class TrimViewModel extends _$TrimViewModel {
         state = state.copyWith(isSnapping: false);
       }
     } else {
+      logger.i('请求播放裁剪播放器 videoId=${state.videoId}');
       // 在末尾时从头播放
       if (state.currentPositionUs >= state.durationUs) {
         await player.seek(Duration.zero);
