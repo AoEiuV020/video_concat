@@ -145,6 +145,14 @@ player.stream.position.listen((pos) {
   // pos 是 Duration
 });
 
+// seek 后等待当前位置真正追上目标
+Future<void> seekAndWait(Player player, Duration target) async {
+  await player.seek(target);
+  await player.stream.position.firstWhere((pos) {
+    return (pos - target).abs() <= const Duration(milliseconds: 100);
+  });
+}
+
 // 监听暂停事件（用于关键帧定位）
 player.stream.playing.listen((playing) {
   if (!playing) {
@@ -156,6 +164,13 @@ player.stream.playing.listen((playing) {
 // 监听错误
 player.stream.error.listen((error) {
   print('Player error: $error');
+});
+
+// 监听播放完成
+player.stream.completed.listen((completed) {
+  if (completed) {
+    print('Playback completed');
+  }
 });
 ```
 
