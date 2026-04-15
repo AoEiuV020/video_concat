@@ -11,6 +11,7 @@ class TrimPreview extends ConsumerWidget {
   final int currentPositionUs;
   final int? draggingPositionUs;
   final int durationUs;
+  final bool isPreviewPending;
 
   const TrimPreview({
     super.key,
@@ -18,6 +19,7 @@ class TrimPreview extends ConsumerWidget {
     required this.currentPositionUs,
     this.draggingPositionUs,
     required this.durationUs,
+    this.isPreviewPending = false,
   });
 
   @override
@@ -32,9 +34,20 @@ class TrimPreview extends ConsumerWidget {
       children: [
         SizedBox(
           height: 240,
-          child: Video(
-            controller: controller,
-            controls: NoVideoControls,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              Video(
+                controller: controller,
+                controls: NoVideoControls,
+              ),
+              if (isPreviewPending)
+                Container(
+                  color: Colors.black26,
+                  alignment: Alignment.center,
+                  child: const CircularProgressIndicator(),
+                ),
+            ],
           ),
         ),
         Padding(

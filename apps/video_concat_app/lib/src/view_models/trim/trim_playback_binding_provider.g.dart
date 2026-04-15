@@ -71,7 +71,7 @@ final class TrimPlaybackBindingProvider
 }
 
 String _$trimPlaybackBindingHash() =>
-    r'1986577eb58817db4d72e8fc7c544e51ebf4868b';
+    r'ef52fcf4fa94c7dcee42ad817f47c33672676a1d';
 
 /// 在裁剪页生命周期内稳定持有播放器渲染资源。
 

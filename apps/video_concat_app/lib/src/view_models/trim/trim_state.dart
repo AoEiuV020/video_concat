@@ -39,6 +39,12 @@ abstract class TrimState with _$TrimState {
     /// 是否正在播放
     @Default(false) bool isPlaying,
 
+    /// 关键帧已确定，但播放器画面尚未跳到目标位置
+    @Default(false) bool isPreviewPending,
+
+    /// 当前等待播放器追上的目标位置
+    int? pendingPreviewTargetUs,
+
     /// 是否正在加载（初始化中）
     @Default(true) bool isLoading,
 
@@ -49,5 +55,6 @@ abstract class TrimState with _$TrimState {
   /// 当前时间不可用（未吸附到关键帧），拖动中和吸附中都属此状态。
   ///
   /// 此状态下 prev/next 和 In/Out 按钮禁用。
-  bool get isTimeUnresolved => isSnapping || draggingPositionUs != null;
+  bool get isTimeUnresolved =>
+      isPlaying || isSnapping || draggingPositionUs != null;
 }

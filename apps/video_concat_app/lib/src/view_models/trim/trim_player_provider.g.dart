@@ -70,7 +70,7 @@ final class TrimPlayerProvider
   }
 }
 
-String _$trimPlayerHash() => r'728a3787bd6e2ed4a5748dbe9cdc333a6444915c';
+String _$trimPlayerHash() => r'afbe60ebb36eaf03c801b4eb333d79bb016c5572';
 
 /// 裁剪页面的视频播放器（per-videoId，auto-dispose）
 
@@ -163,7 +163,7 @@ final class TrimVideoControllerProvider
 }
 
 String _$trimVideoControllerHash() =>
-    r'21cace919591e7e3720f7e35a291aa7b8af0a488';
+    r'2f0e29404ce09e3652029fd0ec001f11cd0ec95d';
 
 /// 裁剪页面的视频渲染控制器
 

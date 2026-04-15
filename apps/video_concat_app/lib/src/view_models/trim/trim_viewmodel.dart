@@ -16,18 +16,23 @@ part 'trim_viewmodel.g.dart';
 /// 裁剪页面 ViewModel
 @riverpod
 class TrimViewModel extends _$TrimViewModel {
+  static const _defaultWindowUs = 10000000;
+  static const _maxWindowUs = 30000000;
+  static const _maxRetries = 3;
+  static const _previewMatchToleranceUs = 100000;
+  static const _previewPendingTimeout = Duration(seconds: 2);
+
   late KeyframeCache _cache;
   Timer? _debounceTimer;
+  Timer? _previewPendingTimer;
   bool _disposed = false;
   int _snapGeneration = 0;
+  int _previewRequestId = 0;
+  int? _activePreviewRequestId;
   StreamSubscription<Duration>? _positionSub;
   StreamSubscription<bool>? _playingSub;
   StreamSubscription<String>? _errorSub;
   StreamSubscription<bool>? _completedSub;
-
-  static const _defaultWindowUs = 10000000;
-  static const _maxWindowUs = 30000000;
-  static const _maxRetries = 3;
 
   @override
   TrimState build(String videoId) {
@@ -35,6 +40,7 @@ class TrimViewModel extends _$TrimViewModel {
     ref.onDispose(() {
       _disposed = true;
       _debounceTimer?.cancel();
+      _previewPendingTimer?.cancel();
       _positionSub?.cancel();
       _playingSub?.cancel();
       _errorSub?.cancel();
@@ -118,6 +124,7 @@ class TrimViewModel extends _$TrimViewModel {
   void _setupPlayerListeners(Player player) {
     // 播放中持续同步滑块位置
     _positionSub = player.stream.position.listen((position) {
+      _completePreviewPendingIfMatched(position.inMicroseconds);
       if (!_disposed && state.isPlaying && state.draggingPositionUs == null) {
         state = state.copyWith(
           currentPositionUs: position.inMicroseconds,
@@ -155,17 +162,14 @@ class TrimViewModel extends _$TrimViewModel {
   }
 
   /// 跳转播放器到指定时间点
-  Future<void> _seekPlayer(int timestampUs) async {
-    if (_disposed) return;
+  Future<int> _seekPlayer(int timestampUs) async {
+    if (_disposed) return timestampUs;
     final player = ref.read(trimPlayerProvider(state.videoId));
-
-    // 虚拟末尾 → 跳到最后实际关键帧
-    final actualTs = timestampUs == state.durationUs
-        ? (_cache.findNearest(state.durationUs) ?? timestampUs)
-        : timestampUs;
+    final actualTs = _resolvePlayerSeekTarget(timestampUs);
 
     logger.d('_seekPlayer timestampUs=$timestampUs actualTs=$actualTs');
     await player.seek(Duration(microseconds: actualTs));
+    return actualTs;
   }
 
   /// 切换播放/暂停
@@ -186,16 +190,14 @@ class TrimViewModel extends _$TrimViewModel {
       final target = _resolveSnapTarget(pos);
 
       if (target != null) {
-        state = state.copyWith(
-          currentPositionUs: target,
-          isSnapping: false,
-        );
-        await _seekPlayer(target);
+        state = state.copyWith(isSnapping: false);
+        await _syncResolvedPosition(target);
       } else {
         state = state.copyWith(isSnapping: false);
       }
     } else {
       logger.i('请求播放裁剪播放器 videoId=${state.videoId}');
+      _clearPreviewPending();
       // 在末尾时从头播放
       if (state.currentPositionUs >= state.durationUs) {
         await player.seek(Duration.zero);
@@ -230,17 +232,14 @@ class TrimViewModel extends _$TrimViewModel {
     }
 
     // 吸附完成，跳到关键帧或虚拟末尾
-    state = state.copyWith(
-      currentPositionUs: target,
-      isSnapping: false,
-      draggingPositionUs: null,
-    );
-    await _seekPlayer(target);
+    state = state.copyWith(isSnapping: false);
+    await _syncResolvedPosition(target);
   }
 
   /// 拖动中调用，即时跳转播放器 + 100ms 防抖触发关键帧信息更新
   void onSliderDragging(int positionUs) {
     _snapGeneration++;
+    _clearPreviewPending();
     state = state.copyWith(
       draggingPositionUs: positionUs,
       isSnapping: false,
@@ -285,11 +284,7 @@ class TrimViewModel extends _$TrimViewModel {
       final lastKf = _cache.findNearest(state.durationUs);
       logger.d('goToPreviousKeyframe 从虚拟末尾 → lastKf=$lastKf');
       if (lastKf != null) {
-        state = state.copyWith(
-          currentPositionUs: lastKf,
-          draggingPositionUs: null,
-        );
-        await _seekPlayer(lastKf);
+        await _syncResolvedPosition(lastKf);
       }
       return;
     }
@@ -299,11 +294,7 @@ class TrimViewModel extends _$TrimViewModel {
       final prev = _cache.findPrevious(current);
       if (prev != null && _cache.isCoveredRange(prev, current)) {
         logger.d('goToPreviousKeyframe 缓存命中 prev=$prev');
-        state = state.copyWith(
-          currentPositionUs: prev,
-          draggingPositionUs: null,
-        );
-        await _seekPlayer(prev);
+        await _syncResolvedPosition(prev);
         return;
       }
     }
@@ -328,12 +319,8 @@ class TrimViewModel extends _$TrimViewModel {
 
     logger.d('goToPreviousKeyframe prev=$prev');
     if (prev != null) {
-      state = state.copyWith(
-        currentPositionUs: prev,
-        isSnapping: false,
-        draggingPositionUs: null,
-      );
-      await _seekPlayer(prev);
+      state = state.copyWith(isSnapping: false);
+      await _syncResolvedPosition(prev);
     } else {
       state = state.copyWith(isSnapping: false, draggingPositionUs: null);
     }
@@ -357,11 +344,7 @@ class TrimViewModel extends _$TrimViewModel {
       final next = _cache.findNext(current);
       if (next != null && _cache.isCoveredRange(current, next)) {
         logger.d('goToNextKeyframe 缓存命中 next=$next');
-        state = state.copyWith(
-          currentPositionUs: next,
-          draggingPositionUs: null,
-        );
-        await _seekPlayer(next);
+        await _syncResolvedPosition(next);
         return;
       }
       // 无后继且已覆盖到末尾 → 虚拟末尾
@@ -369,11 +352,7 @@ class TrimViewModel extends _$TrimViewModel {
         final rangeEnd = _cache.coveredRangeEnd(current);
         if (rangeEnd != null && rangeEnd >= state.durationUs) {
           logger.d('goToNextKeyframe 缓存命中 → 虚拟末尾');
-          state = state.copyWith(
-            currentPositionUs: state.durationUs,
-            draggingPositionUs: null,
-          );
-          await _seekPlayer(state.durationUs);
+          await _syncResolvedPosition(state.durationUs);
           return;
         }
       }
@@ -400,22 +379,14 @@ class TrimViewModel extends _$TrimViewModel {
     // 无后继 → 跳到虚拟末尾
     if (next == null) {
       logger.d('goToNextKeyframe 无后继 → 虚拟末尾');
-      state = state.copyWith(
-        currentPositionUs: state.durationUs,
-        isSnapping: false,
-        draggingPositionUs: null,
-      );
-      await _seekPlayer(state.durationUs);
+      state = state.copyWith(isSnapping: false);
+      await _syncResolvedPosition(state.durationUs);
       return;
     }
 
     logger.d('goToNextKeyframe next=$next');
-    state = state.copyWith(
-      currentPositionUs: next,
-      isSnapping: false,
-      draggingPositionUs: null,
-    );
-    await _seekPlayer(next);
+    state = state.copyWith(isSnapping: false);
+    await _syncResolvedPosition(next);
   }
 
   /// 设置 inpoint 为当前位置
@@ -588,5 +559,66 @@ class TrimViewModel extends _$TrimViewModel {
     final ffmpeg = ref.read(ffmpegServiceProvider);
     ffprobe.deriveFromFFmpegPath(ffmpeg.ffmpegPath);
     return ffprobe;
+  }
+
+  int _resolvePlayerSeekTarget(int timestampUs) {
+    if (timestampUs == state.durationUs) {
+      return _cache.findNearest(state.durationUs) ?? timestampUs;
+    }
+    return timestampUs;
+  }
+
+  Future<void> _syncResolvedPosition(int targetUs) async {
+    if (_disposed) return;
+
+    final actualTs = _resolvePlayerSeekTarget(targetUs);
+    final requestId = ++_previewRequestId;
+    _activePreviewRequestId = requestId;
+    _previewPendingTimer?.cancel();
+
+    state = state.copyWith(
+      currentPositionUs: targetUs,
+      draggingPositionUs: null,
+      isPreviewPending: true,
+      pendingPreviewTargetUs: actualTs,
+    );
+
+    _previewPendingTimer = Timer(_previewPendingTimeout, () {
+      if (_disposed || _activePreviewRequestId != requestId) return;
+      if (!state.isPreviewPending || state.pendingPreviewTargetUs != actualTs) {
+        return;
+      }
+      logger.w('预览画面同步超时 videoId=${state.videoId} targetUs=$actualTs');
+      _clearPreviewPending();
+    });
+
+    await _seekPlayer(targetUs);
+    if (_disposed || _activePreviewRequestId != requestId) return;
+    final player = ref.read(trimPlayerProvider(state.videoId));
+    _completePreviewPendingIfMatched(player.state.position.inMicroseconds);
+  }
+
+  void _clearPreviewPending() {
+    _previewPendingTimer?.cancel();
+    _activePreviewRequestId = null;
+    if (!state.isPreviewPending && state.pendingPreviewTargetUs == null) {
+      return;
+    }
+    state = state.copyWith(
+      isPreviewPending: false,
+      pendingPreviewTargetUs: null,
+    );
+  }
+
+  void _completePreviewPendingIfMatched(int positionUs) {
+    if (_disposed || !_matchesPreviewTarget(positionUs)) return;
+    logger.i('预览画面已同步 videoId=${state.videoId} positionUs=$positionUs');
+    _clearPreviewPending();
+  }
+
+  bool _matchesPreviewTarget(int positionUs) {
+    final targetUs = state.pendingPreviewTargetUs;
+    if (!state.isPreviewPending || targetUs == null) return false;
+    return (positionUs - targetUs).abs() <= _previewMatchToleranceUs;
   }
 }
