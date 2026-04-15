@@ -34,16 +34,15 @@ class TrimPage extends ConsumerWidget {
           ? const Center(child: CircularProgressIndicator())
           : Column(
               children: [
-                // 预览区
+                // 视频预览区
                 TrimPreview(
-                  previewImage: state.previewImage,
-                  isLoading: state.isLoadingPreview,
+                  videoId: videoId,
                   currentPositionUs: state.currentPositionUs,
                   draggingPositionUs: state.draggingPositionUs,
                   durationUs: state.durationUs,
                 ),
                 const Divider(height: 1),
-                // 进度条 + 按钮
+                // 进度条 + 播放/暂停 + 导航按钮
                 Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,
@@ -56,10 +55,12 @@ class TrimPage extends ConsumerWidget {
                     inpointUs: state.pendingInpointUs ?? 0,
                     segments: state.segments,
                     isButtonsDisabled: state.isTimeUnresolved,
+                    isPlaying: state.isPlaying,
                     onChanged: (us) => vm.onSliderDragging(us),
                     onChangeEnd: (us) => vm.onSliderReleased(us),
                     onPrevious: () => vm.goToPreviousKeyframe(),
                     onNext: () => vm.goToNextKeyframe(),
+                    onTogglePlayPause: () => vm.togglePlayPause(),
                   ),
                 ),
                 Padding(
