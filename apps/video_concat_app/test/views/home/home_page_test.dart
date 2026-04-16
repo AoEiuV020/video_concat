@@ -67,6 +67,38 @@ void main() {
       expect(find.text('path=/tmp/output.mp4'), findsOneWidget);
       expect(find.text('ref=<none>'), findsOneWidget);
     });
+
+    testWidgets('分段模式成功后不会自动跳到 video-info', (tester) async {
+      final container = ProviderContainer(
+        overrides: [
+          preferencesRepositoryProvider.overrideWithValue(
+            _FakePreferencesRepository(
+              exportOptions: const ExportOptions(
+                autoOpenVideoInfo: true,
+                enableSegmentOutput: true,
+                segmentDurationText: '120',
+                segmentFilenameTemplate: '%filename%_%03d',
+              ),
+            ),
+          ),
+          videoConcatServiceProvider.overrideWithValue(
+            _FakeVideoConcatService(exitCode: 0),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(_TestApp(container: container));
+      await tester.pump();
+
+      await container
+          .read(homeViewModelProvider.notifier)
+          .startGenerate('/tmp/output.mp4');
+      await tester.pumpAndSettle();
+
+      expect(find.byType(HomePage), findsOneWidget);
+      expect(find.text('path=/tmp/output.mp4'), findsNothing);
+    });
   });
 }
 
@@ -128,6 +160,7 @@ final class _FakeVideoConcatService extends VideoConcatService {
     required String outputPath,
     List<String> preInputArguments = const [],
     List<String> extraArguments = const [],
+    SegmentOutputOptions? segmentOutput,
     List<ChapterInfo>? chapters,
     OutputCallback? onOutput,
   }) async {

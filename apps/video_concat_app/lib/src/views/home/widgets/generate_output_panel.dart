@@ -6,12 +6,14 @@ import '../../../models/models.dart';
 class GenerateOutputPanel extends StatelessWidget {
   final GenerateResult result;
   final GeneratedVideoInfo? generatedVideo;
+  final SegmentedOutputSummary? segmentedOutputSummary;
   final VoidCallback? onOpenVideoInfo;
 
   const GenerateOutputPanel({
     super.key,
     required this.result,
     this.generatedVideo,
+    this.segmentedOutputSummary,
     this.onOpenVideoInfo,
   });
 
@@ -75,7 +77,36 @@ class GenerateOutputPanel extends StatelessWidget {
                 style: TextStyle(color: colorScheme.error),
               ),
             ),
-          if (result.state == GenerateState.success && generatedVideo != null)
+          if (result.state == GenerateState.success &&
+              segmentedOutputSummary != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '分段输出',
+                        style: Theme.of(context).textTheme.labelMedium,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(segmentedOutputSummary!.directoryPath),
+                      const SizedBox(height: 2),
+                      Text(segmentedOutputSummary!.fileNamePattern),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          if (result.state == GenerateState.success &&
+              segmentedOutputSummary == null &&
+              generatedVideo != null)
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
               child: DecoratedBox(

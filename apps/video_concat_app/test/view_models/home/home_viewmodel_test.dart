@@ -4,7 +4,7 @@ import 'package:ffmpeg_kit/ffmpeg_kit.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:video_concat_app/src/models/export_options.dart';
+import 'package:video_concat_app/src/models/models.dart';
 import 'package:video_concat_app/src/repositories/preferences_repository.dart';
 import 'package:video_concat_app/src/view_models/home/home_viewmodel.dart';
 import 'package:video_concat_app/src/view_models/providers.dart';
@@ -13,6 +13,35 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('HomeViewModel', () {
+    test('分段时长非法时不会启动合并', () async {
+      final fakeService = _FakeVideoConcatService(exitCode: 0);
+      final container = ProviderContainer(
+        overrides: [
+          preferencesRepositoryProvider.overrideWithValue(
+            _FakePreferencesRepository(),
+          ),
+          videoConcatServiceProvider.overrideWithValue(fakeService),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final vm = container.read(homeViewModelProvider.notifier);
+      vm.updateExportOptions(
+        const ExportOptions(
+          enableSegmentOutput: true,
+          segmentDurationText: 'abc',
+          segmentFilenameTemplate: '%filename%_%03d',
+        ),
+      );
+
+      await vm.startGenerate('/tmp/output.mp4');
+
+      final state = container.read(homeViewModelProvider);
+      expect(state.generateResult?.state, GenerateState.failed);
+      expect(state.generateResult?.errorMessage, '分段时长格式无效');
+      expect(fakeService.concatCallCount, 0);
+    });
+
     test('合并成功后会记录最近一次成功产物', () async {
       final container = ProviderContainer(
         overrides: [
@@ -32,6 +61,40 @@ void main() {
       final state = container.read(homeViewModelProvider);
       expect(state.lastGeneratedVideo?.outputPath, '/tmp/output.mp4');
       expect(state.lastGeneratedVideo?.fileName, 'output.mp4');
+    });
+
+    test('分段成功后会记录多文件摘要并清空单文件产物', () async {
+      final fakeService = _FakeVideoConcatService(exitCode: 0);
+      final container = ProviderContainer(
+        overrides: [
+          preferencesRepositoryProvider.overrideWithValue(
+            _FakePreferencesRepository(),
+          ),
+          videoConcatServiceProvider.overrideWithValue(fakeService),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final vm = container.read(homeViewModelProvider.notifier);
+      vm.updateExportOptions(
+        const ExportOptions(
+          enableSegmentOutput: true,
+          segmentDurationText: '120',
+          segmentFilenameTemplate: '%filename%_%03d',
+        ),
+      );
+
+      await vm.startGenerate('/tmp/output.mp4');
+
+      final state = container.read(homeViewModelProvider);
+      expect(state.lastGeneratedVideo, isNull);
+      expect(state.segmentedOutputSummary?.directoryPath, '/tmp');
+      expect(state.segmentedOutputSummary?.fileNamePattern, 'output_%03d.mp4');
+      expect(fakeService.lastSegmentOutput?.segmentTime, '120.000000');
+      expect(
+        fakeService.lastSegmentOutput?.outputPattern,
+        '/tmp/output_%03d.mp4',
+      );
     });
 
     test('重置后会清空最近一次成功产物', () async {
@@ -100,6 +163,8 @@ final class _FakePreferencesRepository extends PreferencesRepository {
 
 final class _FakeVideoConcatService extends VideoConcatService {
   final int exitCode;
+  int concatCallCount = 0;
+  SegmentOutputOptions? lastSegmentOutput;
 
   _FakeVideoConcatService({required this.exitCode})
     : super(ffmpegService: FFmpegService());
@@ -110,9 +175,12 @@ final class _FakeVideoConcatService extends VideoConcatService {
     required String outputPath,
     List<String> preInputArguments = const [],
     List<String> extraArguments = const [],
+    SegmentOutputOptions? segmentOutput,
     List<ChapterInfo>? chapters,
     OutputCallback? onOutput,
   }) async {
+    concatCallCount++;
+    lastSegmentOutput = segmentOutput;
     onOutput?.call('done');
     return exitCode;
   }

@@ -4,6 +4,7 @@ import 'ffmpeg_service.dart';
 import 'filelist_builder.dart';
 import 'log.dart';
 import 'models/concat_entry.dart';
+import 'models/segment_output_options.dart';
 
 /// 章节信息
 class ChapterInfo {
@@ -34,6 +35,7 @@ class VideoConcatService {
   /// [outputPath] 输出文件路径
   /// [preInputArguments] -i 之前的 FFmpeg 参数
   /// [extraArguments] 额外 FFmpeg 输出参数
+  /// [segmentOutput] 分段输出参数
   /// [chapters] 章节信息
   /// [onOutput] 实时输出回调
   Future<int> concat({
@@ -41,6 +43,7 @@ class VideoConcatService {
     required String outputPath,
     List<String> preInputArguments = const [],
     List<String> extraArguments = const [],
+    SegmentOutputOptions? segmentOutput,
     List<ChapterInfo>? chapters,
     OutputCallback? onOutput,
   }) async {
@@ -82,7 +85,20 @@ class VideoConcatService {
           'copy',
           ...audioArgs,
           ...filteredExtra,
-          normalizedOutput,
+          if (segmentOutput == null) normalizedOutput,
+          if (segmentOutput != null) ...[
+            '-f',
+            'segment',
+            '-segment_time',
+            segmentOutput.segmentTime,
+            '-reset_timestamps',
+            '1',
+            if (segmentOutput.formatOptions != null) ...[
+              '-segment_format_options',
+              segmentOutput.formatOptions!,
+            ],
+            segmentOutput.outputPattern.replaceAll('\\', '/'),
+          ],
         ],
         onOutput: onOutput,
       );

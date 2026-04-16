@@ -17,6 +17,10 @@ class PreferencesRepository {
   static const _keyExportStripMetadata = 'export_strip_metadata';
   static const _keyExportAddChapters = 'export_add_chapters';
   static const _keyExportAutoOpenVideoInfo = 'export_auto_open_video_info';
+  static const _keyExportEnableSegmentOutput = 'export_enable_segment_output';
+  static const _keyExportSegmentDurationText = 'export_segment_duration_text';
+  static const _keyExportSegmentFilenameTemplate =
+      'export_segment_filename_template';
 
   /// 获取上次使用的输出后缀
   Future<String> getLastExtension() async {
@@ -57,6 +61,12 @@ class PreferencesRepository {
       stripMetadata: prefs.getBool(_keyExportStripMetadata) ?? false,
       addChapters: prefs.getBool(_keyExportAddChapters) ?? false,
       autoOpenVideoInfo: prefs.getBool(_keyExportAutoOpenVideoInfo) ?? false,
+      enableSegmentOutput:
+          prefs.getBool(_keyExportEnableSegmentOutput) ?? false,
+      segmentDurationText: prefs.getString(_keyExportSegmentDurationText) ?? '',
+      segmentFilenameTemplate:
+          prefs.getString(_keyExportSegmentFilenameTemplate) ??
+          '%filename%_%03d',
     );
   }
 
@@ -87,6 +97,30 @@ class PreferencesRepository {
         _keyExportAutoOpenVideoInfo,
         options.autoOpenVideoInfo,
       );
+      await prefs.setBool(
+        _keyExportEnableSegmentOutput,
+        options.enableSegmentOutput,
+      );
+      await prefs.setString(
+        _keyExportSegmentDurationText,
+        options.segmentDurationText,
+      );
+      await prefs.setString(
+        _keyExportSegmentFilenameTemplate,
+        options.segmentFilenameTemplate,
+      );
+    } else {
+      await prefs.remove(_keyExportShowOptions);
+      await prefs.remove(_keyExportRotation);
+      await prefs.remove(_keyExportRemoveAudio);
+      await prefs.remove(_keyExportRemoveSubtitles);
+      await prefs.remove(_keyExportFastStart);
+      await prefs.remove(_keyExportStripMetadata);
+      await prefs.remove(_keyExportAddChapters);
+      await prefs.remove(_keyExportAutoOpenVideoInfo);
+      await prefs.remove(_keyExportEnableSegmentOutput);
+      await prefs.remove(_keyExportSegmentDurationText);
+      await prefs.remove(_keyExportSegmentFilenameTemplate);
     }
   }
 }

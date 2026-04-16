@@ -128,6 +128,7 @@ class _HomePageState extends ConsumerState<HomePage> {
             child: GenerateOutputPanel(
               result: state.generateResult!,
               generatedVideo: state.lastGeneratedVideo,
+              segmentedOutputSummary: state.segmentedOutputSummary,
               onOpenVideoInfo: state.lastGeneratedVideo == null
                   ? null
                   : () => context.push(

@@ -9,6 +9,7 @@ export 'src/models/format_info.dart';
 export 'src/models/keyframe.dart';
 export 'src/models/probe_compare_result.dart';
 export 'src/models/probe_result.dart';
+export 'src/models/segment_output_options.dart';
 export 'src/models/stream_diff.dart';
 export 'src/models/stream_info.dart';
 export 'src/models/trim_config.dart';

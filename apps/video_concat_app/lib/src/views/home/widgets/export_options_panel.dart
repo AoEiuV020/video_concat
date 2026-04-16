@@ -115,6 +115,13 @@ class ExportOptionsPanel extends StatelessWidget {
             vm.updateExportOptions(options.copyWith(addChapters: v ?? false)),
       ),
       _CheckboxItem(
+        label: '按目标时长分段',
+        value: options.enableSegmentOutput,
+        onChanged: (v) => vm.updateExportOptions(
+          options.copyWith(enableSegmentOutput: v ?? false),
+        ),
+      ),
+      _CheckboxItem(
         label: '自动打开信息页',
         value: options.autoOpenVideoInfo,
         onChanged: (v) => vm.updateExportOptions(
@@ -123,9 +130,57 @@ class ExportOptionsPanel extends StatelessWidget {
       ),
     ];
 
-    return Wrap(
-      spacing: 8,
-      children: items.map((item) => _buildCheckboxTile(item)).toList(),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Wrap(
+          spacing: 8,
+          children: items.map((item) => _buildCheckboxTile(item)).toList(),
+        ),
+        if (options.enableSegmentOutput) ...[
+          const SizedBox(height: 8),
+          _buildSegmentTextField(
+            label: '分段时长',
+            initialValue: options.segmentDurationText,
+            onChanged: (value) => vm.updateExportOptions(
+              options.copyWith(segmentDurationText: value),
+            ),
+          ),
+          const SizedBox(height: 8),
+          _buildSegmentTextField(
+            label: '文件名模板',
+            initialValue: options.segmentFilenameTemplate,
+            onChanged: (value) => vm.updateExportOptions(
+              options.copyWith(segmentFilenameTemplate: value),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '切点按关键帧对齐，时长可能略有偏差。',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildSegmentTextField({
+    required String label,
+    required String initialValue,
+    required ValueChanged<String> onChanged,
+  }) {
+    return SizedBox(
+      width: 280,
+      child: TextFormField(
+        initialValue: initialValue,
+        enabled: !isGenerating,
+        onChanged: onChanged,
+        decoration: InputDecoration(
+          labelText: label,
+          isDense: true,
+          border: const OutlineInputBorder(),
+        ),
+      ),
     );
   }
 

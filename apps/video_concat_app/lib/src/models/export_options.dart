@@ -30,6 +30,15 @@ abstract class ExportOptions with _$ExportOptions {
     /// 合并成功后自动打开信息页
     @Default(false) bool autoOpenVideoInfo,
 
+    /// 启用按目标时长分段输出
+    @Default(false) bool enableSegmentOutput,
+
+    /// 分段时长输入文本
+    @Default('') String segmentDurationText,
+
+    /// 分段文件名模板
+    @Default('%filename%_%03d') String segmentFilenameTemplate,
+
     /// 记住所有导出选择
     @Default(false) bool rememberChoices,
   }) = _ExportOptions;

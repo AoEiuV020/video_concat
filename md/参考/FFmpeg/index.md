@@ -13,6 +13,7 @@
 ## ffmpeg
 
 - [裁剪定位](ffmpeg-裁剪.md)
+- [分段输出](ffmpeg-分段输出.md)
 - [帧提取](ffmpeg-帧提取.md)
 - [HDR 预览 Tone Mapping](ffmpeg-HDR预览.md)
 - [拼接](ffmpeg-拼接.md)

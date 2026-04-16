@@ -31,4 +31,28 @@ void main() {
     expect(find.text('output.mp4'), findsOneWidget);
     expect(find.text('查看信息'), findsOneWidget);
   });
+
+  testWidgets('分段成功时显示多文件摘要且不显示查看信息', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: GenerateOutputPanel(
+            result: const GenerateResult(
+              state: GenerateState.success,
+              output: 'done',
+            ),
+            segmentedOutputSummary: const SegmentedOutputSummary(
+              directoryPath: '/tmp',
+              fileNamePattern: 'output_%03d.mp4',
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('分段输出'), findsOneWidget);
+    expect(find.text('/tmp'), findsOneWidget);
+    expect(find.text('output_%03d.mp4'), findsOneWidget);
+    expect(find.text('查看信息'), findsNothing);
+  });
 }

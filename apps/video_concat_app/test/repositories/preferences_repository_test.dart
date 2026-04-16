@@ -30,5 +30,65 @@ void main() {
       final prefs = await SharedPreferences.getInstance();
       expect(prefs.getBool('export_auto_open_video_info'), isTrue);
     });
+
+    test('loadExportOptions 会读取分段输出选项', () async {
+      SharedPreferences.setMockInitialValues({
+        'export_enable_segment_output': true,
+        'export_segment_duration_text': '120.5',
+        'export_segment_filename_template': '%filename%_%03d',
+      });
+
+      final repo = PreferencesRepository();
+      final options = await repo.loadExportOptions();
+
+      expect(options.enableSegmentOutput, isTrue);
+      expect(options.segmentDurationText, '120.5');
+      expect(options.segmentFilenameTemplate, '%filename%_%03d');
+    });
+
+    test('rememberChoices=true 时会保存分段输出选项', () async {
+      SharedPreferences.setMockInitialValues({});
+      final repo = PreferencesRepository();
+
+      await repo.saveExportOptions(
+        const ExportOptions(
+          rememberChoices: true,
+          enableSegmentOutput: true,
+          segmentDurationText: '120',
+          segmentFilenameTemplate: '%filename%_%03d',
+        ),
+      );
+
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getBool('export_enable_segment_output'), isTrue);
+      expect(prefs.getString('export_segment_duration_text'), '120');
+      expect(
+        prefs.getString('export_segment_filename_template'),
+        '%filename%_%03d',
+      );
+    });
+
+    test('rememberChoices=false 时不会保留分段输出选项', () async {
+      SharedPreferences.setMockInitialValues({
+        'export_enable_segment_output': true,
+        'export_segment_duration_text': '120',
+        'export_segment_filename_template': '%filename%_%03d',
+      });
+      final repo = PreferencesRepository();
+
+      await repo.saveExportOptions(
+        const ExportOptions(
+          rememberChoices: false,
+          enableSegmentOutput: true,
+          segmentDurationText: '120',
+          segmentFilenameTemplate: '%filename%_%03d',
+        ),
+      );
+
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getBool('export_enable_segment_output'), isNull);
+      expect(prefs.getString('export_segment_duration_text'), isNull);
+      expect(prefs.getString('export_segment_filename_template'), isNull);
+    });
   });
 }
