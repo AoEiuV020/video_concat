@@ -5,10 +5,14 @@ import '../../../models/models.dart';
 /// 生成输出面板
 class GenerateOutputPanel extends StatelessWidget {
   final GenerateResult result;
+  final GeneratedVideoInfo? generatedVideo;
+  final VoidCallback? onOpenVideoInfo;
 
   const GenerateOutputPanel({
     super.key,
     required this.result,
+    this.generatedVideo,
+    this.onOpenVideoInfo,
   });
 
   @override
@@ -69,6 +73,41 @@ class GenerateOutputPanel extends StatelessWidget {
               child: Text(
                 result.errorMessage!,
                 style: TextStyle(color: colorScheme.error),
+              ),
+            ),
+          if (result.state == GenerateState.success && generatedVideo != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '合并结果',
+                              style: Theme.of(context).textTheme.labelMedium,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(generatedVideo!.fileName),
+                          ],
+                        ),
+                      ),
+                      TextButton.icon(
+                        onPressed: onOpenVideoInfo,
+                        icon: const Icon(Icons.info_outline),
+                        label: const Text('查看信息'),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
           Container(

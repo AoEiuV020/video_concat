@@ -14,6 +14,7 @@ abstract class HomeState with _$HomeState {
     OutputConfig outputConfig,
     @Default(ExportOptions()) ExportOptions exportOptions,
     GenerateResult? generateResult,
+    GeneratedVideoInfo? lastGeneratedVideo,
     @Default(false) bool isGenerating,
     ProbeResult? referenceResult,
     @Default({}) Map<String, bool> videoCompatibility,

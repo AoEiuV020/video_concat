@@ -28,12 +28,14 @@ class HomeViewModel extends _$HomeViewModel {
       final prefs = ref.read(preferencesRepositoryProvider);
       final ext = await prefs.getLastExtension();
       final exportOptions = await prefs.loadExportOptions();
+      if (!ref.mounted) return;
       state = state.copyWith(
         outputConfig: state.outputConfig.copyWith(extension: ext),
         exportOptions: exportOptions,
       );
       logger.d('偏好加载完成 ext=$ext exportOptions=$exportOptions');
     } catch (e, s) {
+      if (!ref.mounted) return;
       logger.e('偏好加载失败', error: e, stackTrace: s);
     }
   }
@@ -47,13 +49,16 @@ class HomeViewModel extends _$HomeViewModel {
         final file = File(path);
         final fileName = path.split('/').last.split('\\').last;
         final fileSize = await file.length();
-        newItems.add(VideoItem(
-          id: DateTime.now().microsecondsSinceEpoch.toString() +
-              filePaths.indexOf(path).toString(),
-          filePath: path,
-          fileName: fileName,
-          fileSize: fileSize,
-        ));
+        newItems.add(
+          VideoItem(
+            id:
+                DateTime.now().microsecondsSinceEpoch.toString() +
+                filePaths.indexOf(path).toString(),
+            filePath: path,
+            fileName: fileName,
+            fileSize: fileSize,
+          ),
+        );
       }
 
       final items = [...state.videoItems, ...newItems];
@@ -153,8 +158,10 @@ class HomeViewModel extends _$HomeViewModel {
 
   /// 设置视频的裁剪配置
   void setTrimConfig(String videoId, TrimConfig? config) {
-    logger.d('setTrimConfig videoId=$videoId '
-        'segments=${config?.segments.length ?? 0}');
+    logger.d(
+      'setTrimConfig videoId=$videoId '
+      'segments=${config?.segments.length ?? 0}',
+    );
     final items = state.videoItems.map((v) {
       if (v.id == videoId) return v.copyWith(trimConfig: config);
       return v;
@@ -164,8 +171,10 @@ class HomeViewModel extends _$HomeViewModel {
 
   /// 开始生成
   Future<void> startGenerate(String outputPath) async {
-    logger.i('startGenerate outputPath=$outputPath '
-        'videos=${state.videoItems.length}');
+    logger.i(
+      'startGenerate outputPath=$outputPath '
+      'videos=${state.videoItems.length}',
+    );
 
     // 保存导出选项（remember 开关始终保存）
     try {
@@ -178,6 +187,7 @@ class HomeViewModel extends _$HomeViewModel {
 
     state = state.copyWith(
       isGenerating: true,
+      lastGeneratedVideo: null,
       generateResult: const GenerateResult(
         state: GenerateState.running,
         output: '',
@@ -204,11 +214,15 @@ class HomeViewModel extends _$HomeViewModel {
         logger.d('章节数=${chapters?.length}');
       }
 
-      final entries = state.videoItems.map((v) => ConcatEntry(
-        filePath: v.filePath,
-        trimConfig: v.trimConfig,
-        durationUs: v.durationUs,
-      )).toList();
+      final entries = state.videoItems
+          .map(
+            (v) => ConcatEntry(
+              filePath: v.filePath,
+              trimConfig: v.trimConfig,
+              durationUs: v.durationUs,
+            ),
+          )
+          .toList();
       logger.d('entries=${entries.length}');
 
       final exitCode = await service.concat(
@@ -237,6 +251,12 @@ class HomeViewModel extends _$HomeViewModel {
 
       state = state.copyWith(
         isGenerating: false,
+        lastGeneratedVideo: resultState == GenerateState.success
+            ? GeneratedVideoInfo(
+                outputPath: outputPath,
+                fileName: outputPath.split('/').last.split('\\').last,
+              )
+            : null,
         generateResult: GenerateResult(
           state: resultState,
           output: buffer.toString(),
@@ -342,18 +362,17 @@ class HomeViewModel extends _$HomeViewModel {
   }
 
   /// 探测单个视频并与标准对比。
-  Future<void> _probeAndCompare(
-    VideoItem item,
-    ProbeResult refResult,
-  ) async {
+  Future<void> _probeAndCompare(VideoItem item, ProbeResult refResult) async {
     bool compatible;
     int? durationUs;
     try {
       final result = await _getFfprobeService().probe(item.filePath);
       compatible = _comparer.compare(refResult, result).isCompatible;
       durationUs = (result.format.duration * 1000000).round();
-      logger.d('探测 ${item.fileName} compatible=$compatible '
-          'durationUs=$durationUs');
+      logger.d(
+        '探测 ${item.fileName} compatible=$compatible '
+        'durationUs=$durationUs',
+      );
     } catch (e, s) {
       logger.e('探测失败 ${item.fileName}', error: e, stackTrace: s);
       compatible = false;

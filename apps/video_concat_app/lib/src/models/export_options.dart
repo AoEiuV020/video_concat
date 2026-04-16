@@ -27,6 +27,9 @@ abstract class ExportOptions with _$ExportOptions {
     /// 在拼接点添加章节标记
     @Default(false) bool addChapters,
 
+    /// 合并成功后自动打开信息页
+    @Default(false) bool autoOpenVideoInfo,
+
     /// 记住所有导出选择
     @Default(false) bool rememberChoices,
   }) = _ExportOptions;

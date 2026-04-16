@@ -16,6 +16,7 @@ class PreferencesRepository {
   static const _keyExportFastStart = 'export_fast_start';
   static const _keyExportStripMetadata = 'export_strip_metadata';
   static const _keyExportAddChapters = 'export_add_chapters';
+  static const _keyExportAutoOpenVideoInfo = 'export_auto_open_video_info';
 
   /// 获取上次使用的输出后缀
   Future<String> getLastExtension() async {
@@ -55,6 +56,7 @@ class PreferencesRepository {
       fastStart: prefs.getBool(_keyExportFastStart) ?? false,
       stripMetadata: prefs.getBool(_keyExportStripMetadata) ?? false,
       addChapters: prefs.getBool(_keyExportAddChapters) ?? false,
+      autoOpenVideoInfo: prefs.getBool(_keyExportAutoOpenVideoInfo) ?? false,
     );
   }
 
@@ -81,6 +83,10 @@ class PreferencesRepository {
       await prefs.setBool(_keyExportFastStart, options.fastStart);
       await prefs.setBool(_keyExportStripMetadata, options.stripMetadata);
       await prefs.setBool(_keyExportAddChapters, options.addChapters);
+      await prefs.setBool(
+        _keyExportAutoOpenVideoInfo,
+        options.autoOpenVideoInfo,
+      );
     }
   }
 }

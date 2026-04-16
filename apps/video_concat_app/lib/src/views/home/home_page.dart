@@ -1,11 +1,13 @@
 import 'dart:ui';
 
+import 'package:flutter/material.dart';
+
 import 'package:desktop_drop/desktop_drop.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../models/generate_result.dart';
 import '../../view_models/home/home_state.dart';
 import '../../view_models/home/home_viewmodel.dart';
 import 'widgets/export_options_panel.dart';
@@ -46,10 +48,29 @@ class _HomePageState extends ConsumerState<HomePage> {
     final state = ref.watch(homeViewModelProvider);
     final vm = ref.read(homeViewModelProvider.notifier);
 
+    ref.listen(homeViewModelProvider.select((s) => s.isGenerating), (
+      prev,
+      next,
+    ) {
+      if (next && !(prev ?? false)) _scrollToOutput();
+    });
     ref.listen(
-      homeViewModelProvider.select((s) => s.isGenerating),
-      (prev, next) {
-        if (next && !(prev ?? false)) _scrollToOutput();
+      homeViewModelProvider.select(
+        (s) => (
+          s.generateResult?.state,
+          s.lastGeneratedVideo?.outputPath,
+          s.exportOptions.autoOpenVideoInfo,
+        ),
+      ),
+      (previous, next) {
+        final (resultState, outputPath, autoOpenVideoInfo) = next;
+        if (resultState != GenerateState.success ||
+            !autoOpenVideoInfo ||
+            outputPath == null ||
+            previous?.$2 == outputPath) {
+          return;
+        }
+        context.push(_buildVideoInfoUri(outputPath));
       },
     );
 
@@ -104,7 +125,15 @@ class _HomePageState extends ConsumerState<HomePage> {
         ),
         if (state.generateResult != null)
           SliverToBoxAdapter(
-            child: GenerateOutputPanel(result: state.generateResult!),
+            child: GenerateOutputPanel(
+              result: state.generateResult!,
+              generatedVideo: state.lastGeneratedVideo,
+              onOpenVideoInfo: state.lastGeneratedVideo == null
+                  ? null
+                  : () => context.push(
+                      _buildVideoInfoUri(state.lastGeneratedVideo!.outputPath),
+                    ),
+            ),
           ),
       ],
     );
@@ -118,8 +147,11 @@ class _HomePageState extends ConsumerState<HomePage> {
     return AnimatedBuilder(
       animation: animation,
       builder: (context, child) {
-        final elevation =
-            lerpDouble(0, 6, Curves.easeInOut.transform(animation.value))!;
+        final elevation = lerpDouble(
+          0,
+          6,
+          Curves.easeInOut.transform(animation.value),
+        )!;
         return Material(elevation: elevation, child: child);
       },
       child: child,
@@ -147,7 +179,8 @@ class _HomePageState extends ConsumerState<HomePage> {
     int index,
   ) {
     final item = state.videoItems[index];
-    final isOutOfOrder = index > 0 &&
+    final isOutOfOrder =
+        index > 0 &&
         item.fileName.compareTo(state.videoItems[index - 1].fileName) < 0;
     final isIncompatible = state.videoCompatibility[item.id] == false;
     final refPath = isIncompatible && state.videoItems.isNotEmpty
@@ -159,8 +192,7 @@ class _HomePageState extends ConsumerState<HomePage> {
       index: index,
       onDelete: () => vm.removeVideo(item.id),
       onTap: () {
-        var uri =
-            '/video-info?path=${Uri.encodeComponent(item.filePath)}';
+        var uri = _buildVideoInfoUri(item.filePath);
         if (refPath != null) {
           uri += '&ref=${Uri.encodeComponent(refPath)}';
         }
@@ -172,6 +204,10 @@ class _HomePageState extends ConsumerState<HomePage> {
       isOutOfOrder: isOutOfOrder,
       isIncompatible: isIncompatible,
     );
+  }
+
+  String _buildVideoInfoUri(String filePath) {
+    return '/video-info?path=${Uri.encodeComponent(filePath)}';
   }
 
   Widget _buildOptionsSection(

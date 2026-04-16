@@ -26,7 +26,9 @@ class ExportOptionsPanel extends StatelessWidget {
       duration: const Duration(milliseconds: 200),
       curve: Curves.easeInOut,
       alignment: Alignment.topCenter,
-      child: options.showOptions ? _buildPanel(context) : const SizedBox.shrink(),
+      child: options.showOptions
+          ? _buildPanel(context)
+          : const SizedBox.shrink(),
     );
   }
 
@@ -55,10 +57,12 @@ class ExportOptionsPanel extends StatelessWidget {
         SegmentedButton<int?>(
           showSelectedIcon: false,
           segments: _rotations
-              .map((r) => ButtonSegment(
-                    value: r,
-                    label: Text(r == null ? '不设置' : '$r°'),
-                  ))
+              .map(
+                (r) => ButtonSegment(
+                  value: r,
+                  label: Text(r == null ? '不设置' : '$r°'),
+                ),
+              )
               .toList(),
           selected: {options.rotation},
           onSelectionChanged: isGenerating
@@ -80,9 +84,8 @@ class ExportOptionsPanel extends StatelessWidget {
       _CheckboxItem(
         label: '去除音频',
         value: options.removeAudio,
-        onChanged: (v) => vm.updateExportOptions(
-          options.copyWith(removeAudio: v ?? false),
-        ),
+        onChanged: (v) =>
+            vm.updateExportOptions(options.copyWith(removeAudio: v ?? false)),
       ),
       _CheckboxItem(
         label: '去除字幕',
@@ -96,22 +99,26 @@ class ExportOptionsPanel extends StatelessWidget {
         value: options.fastStart,
         enabled: isMp4Like,
         tooltip: isMp4Like ? null : '仅支持 mp4/mov 格式',
-        onChanged: (v) => vm.updateExportOptions(
-          options.copyWith(fastStart: v ?? false),
-        ),
+        onChanged: (v) =>
+            vm.updateExportOptions(options.copyWith(fastStart: v ?? false)),
       ),
       _CheckboxItem(
         label: '清除元数据',
         value: options.stripMetadata,
-        onChanged: (v) => vm.updateExportOptions(
-          options.copyWith(stripMetadata: v ?? false),
-        ),
+        onChanged: (v) =>
+            vm.updateExportOptions(options.copyWith(stripMetadata: v ?? false)),
       ),
       _CheckboxItem(
         label: '拼接点章节',
         value: options.addChapters,
+        onChanged: (v) =>
+            vm.updateExportOptions(options.copyWith(addChapters: v ?? false)),
+      ),
+      _CheckboxItem(
+        label: '自动打开信息页',
+        value: options.autoOpenVideoInfo,
         onChanged: (v) => vm.updateExportOptions(
-          options.copyWith(addChapters: v ?? false),
+          options.copyWith(autoOpenVideoInfo: v ?? false),
         ),
       ),
     ];
@@ -137,9 +144,7 @@ class ExportOptionsPanel extends StatelessWidget {
             onTap: enabled ? () => item.onChanged(!item.value) : null,
             child: Text(
               item.label,
-              style: TextStyle(
-                color: enabled ? null : Colors.grey,
-              ),
+              style: TextStyle(color: enabled ? null : Colors.grey),
             ),
           ),
         ],
@@ -165,17 +170,17 @@ class ExportOptionsPanel extends StatelessWidget {
               onChanged: isGenerating
                   ? null
                   : (v) => vm.updateExportOptions(
-                        options.copyWith(rememberChoices: v ?? false),
-                      ),
+                      options.copyWith(rememberChoices: v ?? false),
+                    ),
             ),
             GestureDetector(
               onTap: isGenerating
                   ? null
                   : () => vm.updateExportOptions(
-                        options.copyWith(
-                          rememberChoices: !options.rememberChoices,
-                        ),
+                      options.copyWith(
+                        rememberChoices: !options.rememberChoices,
                       ),
+                    ),
               child: const Text('记住选择'),
             ),
           ],
