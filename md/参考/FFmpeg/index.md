@@ -17,3 +17,4 @@
 - [HDR 预览 Tone Mapping](ffmpeg-HDR预览.md)
 - [拼接](ffmpeg-拼接.md)
 - [流与元数据](ffmpeg-流与元数据.md)
+- [许可证边界](ffmpeg-许可证边界.md)
