@@ -139,42 +139,6 @@ final class _ThrowingFFprobeService extends FFprobeService {
   }
 }
 
-ProbeResult _probeResult({required int width}) {
-  return ProbeResult(
-    format: const FormatInfo(
-      filename: 'sample.mp4',
-      formatName: 'mov,mp4,m4a,3gp,3g2,mj2',
-      formatLongName: 'QuickTime / MOV',
-      duration: 12,
-      size: 1024,
-      bitRate: 4096,
-      nbStreams: 2,
-    ),
-    streams: [
-      StreamInfo(
-        index: 0,
-        codecName: 'h264',
-        codecLongName: 'H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10',
-        codecType: 'video',
-        profile: 'High',
-        width: width,
-        height: 1080,
-        pixFmt: 'yuv420p',
-        frameRate: '30/1',
-      ),
-      const StreamInfo(
-        index: 1,
-        codecName: 'aac',
-        codecLongName: 'AAC (Advanced Audio Coding)',
-        codecType: 'audio',
-        sampleRate: '48000',
-        channels: 2,
-        channelLayout: 'stereo',
-      ),
-    ],
-  );
-}
-
 ProbeResult _audioProbeResult({required String sampleRate}) {
   return ProbeResult(
     format: const FormatInfo(

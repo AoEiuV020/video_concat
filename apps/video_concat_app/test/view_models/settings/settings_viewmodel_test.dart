@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:ffmpeg_kit/ffmpeg_kit.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -21,7 +19,7 @@ void main() {
       );
       addTearDown(container.dispose);
 
-      final sub = container.listen(settingsViewModelProvider, (_, __) {});
+      final sub = container.listen(settingsViewModelProvider, (_, _) {});
       addTearDown(sub.close);
 
       expect(container.read(settingsViewModelProvider).isValidating, isTrue);
@@ -46,7 +44,7 @@ void main() {
       );
       addTearDown(container.dispose);
 
-      final sub = container.listen(settingsViewModelProvider, (_, __) {});
+      final sub = container.listen(settingsViewModelProvider, (_, _) {});
       addTearDown(sub.close);
       final vm = container.read(settingsViewModelProvider.notifier);
 

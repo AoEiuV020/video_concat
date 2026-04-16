@@ -108,7 +108,7 @@ void main() {
       );
       addTearDown(container.dispose);
 
-      final subscription = container.listen(homeViewModelProvider, (_, __) {});
+      final subscription = container.listen(homeViewModelProvider, (_, _) {});
       addTearDown(subscription.close);
       final vm = container.read(homeViewModelProvider.notifier);
       await vm.addVideos([fileA.path, fileB.path]);
