@@ -8,13 +8,7 @@ import 'utils/timestamp.dart';
 
 /// FFprobe 服务，用于探测媒体文件信息。
 class FFprobeService {
-  String _ffprobePath = 'ffprobe';
-
-  /// 设置 ffprobe 可执行文件路径。
-  set ffprobePath(String path) => _ffprobePath = path;
-
-  /// 获取 ffprobe 可执行文件路径。
-  String get ffprobePath => _ffprobePath;
+  String ffprobePath = 'ffprobe';
 
   /// 从 ffmpeg 路径推导 ffprobe 路径。
   ///
@@ -28,7 +22,7 @@ class FFprobeService {
     final last = parts.last.replaceAll('ffmpeg', 'ffprobe');
     parts[parts.length - 1] = last;
 
-    _ffprobePath = parts.join(separator);
+    ffprobePath = parts.join(separator);
   }
 
   /// 探测媒体文件信息。
@@ -37,7 +31,7 @@ class FFprobeService {
   /// 返回解析后的 [ProbeResult]
   Future<ProbeResult> probe(String filePath) async {
     logger.d('probe file=$filePath');
-    final result = await Process.run(_ffprobePath, [
+    final result = await Process.run(ffprobePath, [
       '-v',
       'quiet',
       '-print_format',
@@ -138,7 +132,7 @@ class FFprobeService {
     );
 
     final result = await Process.run(
-      _ffprobePath,
+      ffprobePath,
       args,
       runInShell: Platform.isWindows,
     );
