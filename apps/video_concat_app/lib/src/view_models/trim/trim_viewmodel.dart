@@ -8,6 +8,7 @@ import '../../log.dart';
 import '../../utils/keyframe_cache.dart';
 import '../home/home_viewmodel.dart';
 import '../providers.dart';
+import 'trim_segment_editor.dart';
 import 'trim_player_provider.dart';
 import 'trim_state.dart';
 
@@ -391,61 +392,31 @@ class TrimViewModel extends _$TrimViewModel {
   String? setOutpoint() {
     final current = state.currentPositionUs;
     final pending = state.pendingInpointUs;
-
-    // 虚拟末尾 → outpoint = durationUs，filelist 省略 outpoint → EOF
-    // 普通关键帧 → 正常左闭右开
     final isVirtualEnd = current == state.durationUs;
-    final outpoint = isVirtualEnd ? state.durationUs : current;
     final outpointDts = isVirtualEnd ? null : _cache.getDts(current);
 
     logger.d(
-      'setOutpoint current=$current outpoint=$outpoint '
+      'setOutpoint current=$current outpoint=${isVirtualEnd ? state.durationUs : current} '
       'pending=$pending outpointDts=$outpointDts '
       'isVirtualEnd=$isVirtualEnd',
     );
 
-    if (pending != null) {
-      // 有 pending inpoint → 创建新片段
-      if (outpoint <= pending) {
-        return '终点必须在起点之后';
-      }
-      final newSeg = TrimSegment(
-        inpoint: pending,
-        outpoint: outpoint,
-        outpointDtsUs: outpointDts,
-      );
-      for (final existing in state.segments) {
-        if (_overlaps(newSeg, existing)) {
-          return '新片段与已有片段重叠';
-        }
-      }
-      final segments = [...state.segments, newSeg]
-        ..sort((a, b) => a.inpoint.compareTo(b.inpoint));
-      state = state.copyWith(segments: segments, pendingInpointUs: null);
-    } else {
-      // 无 pending → 更新最后一个片段的 outpoint
-      if (state.segments.isEmpty) {
-        return '没有可更新的片段';
-      }
-      final lastIdx = state.segments.length - 1;
-      final last = state.segments[lastIdx];
-      if (outpoint <= last.inpoint) {
-        return '终点必须在起点之后';
-      }
-      final updated = TrimSegment(
-        inpoint: last.inpoint,
-        outpoint: outpoint,
-        outpointDtsUs: outpointDts,
-      );
-      for (var i = 0; i < state.segments.length - 1; i++) {
-        if (_overlaps(updated, state.segments[i])) {
-          return '更新后的片段与已有片段重叠';
-        }
-      }
-      final segments = [...state.segments];
-      segments[lastIdx] = updated;
-      state = state.copyWith(segments: segments);
+    final result = applyTrimOutpoint(
+      segments: state.segments,
+      pendingInpointUs: pending,
+      currentPositionUs: current,
+      durationUs: state.durationUs,
+      outpointDtsUs: outpointDts,
+    );
+
+    if (result.errorMessage != null) {
+      return result.errorMessage;
     }
+
+    state = state.copyWith(
+      segments: result.segments,
+      pendingInpointUs: result.pendingInpointUs,
+    );
     return null;
   }
 
@@ -469,10 +440,6 @@ class TrimViewModel extends _$TrimViewModel {
     } else {
       homeVm.setTrimConfig(state.videoId, TrimConfig(segments: state.segments));
     }
-  }
-
-  bool _overlaps(TrimSegment a, TrimSegment b) {
-    return a.inpoint < b.outpoint && b.inpoint < a.outpoint;
   }
 
   /// 解析吸附目标：关键帧或虚拟末尾。
