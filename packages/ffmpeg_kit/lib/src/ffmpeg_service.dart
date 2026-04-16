@@ -10,14 +10,8 @@ typedef OutputCallback = void Function(String output);
 
 /// FFmpeg 服务
 class FFmpegService {
-  String _ffmpegPath = 'ffmpeg';
+  String ffmpegPath = 'ffmpeg';
   Process? _currentProcess;
-
-  /// 设置 FFmpeg 可执行文件路径
-  set ffmpegPath(String path) => _ffmpegPath = path;
-
-  /// 获取 FFmpeg 可执行文件路径
-  String get ffmpegPath => _ffmpegPath;
 
   /// 是否正在执行
   bool get isRunning => _currentProcess != null;
@@ -29,11 +23,11 @@ class FFmpegService {
   /// 验证 FFmpeg 是否可用
   Future<bool> validate() async {
     try {
-      final result = await Process.run(_ffmpegPath, ['-version']);
-      logger.d('validate path=$_ffmpegPath exitCode=${result.exitCode}');
+      final result = await Process.run(ffmpegPath, ['-version']);
+      logger.d('validate path=$ffmpegPath exitCode=${result.exitCode}');
       return result.exitCode == 0;
     } catch (e, s) {
-      logger.e('validate 失败 path=$_ffmpegPath', error: e, stackTrace: s);
+      logger.e('validate 失败 path=$ffmpegPath', error: e, stackTrace: s);
       return false;
     }
   }
@@ -49,7 +43,7 @@ class FFmpegService {
   }) async {
     _cancelled = false;
     logger.d('execute args=${arguments.join(" ")}');
-    _currentProcess = await Process.start(_ffmpegPath, arguments);
+    _currentProcess = await Process.start(ffmpegPath, arguments);
 
     _currentProcess!.stdout.transform(utf8.decoder).listen((data) {
       onOutput?.call(data);
@@ -111,7 +105,7 @@ class FFmpegService {
               'scale=$maxWidth:-1'
         : 'scale=$maxWidth:-1';
 
-    final result = await Process.run(_ffmpegPath, [
+    final result = await Process.run(ffmpegPath, [
       '-ss',
       timestampStr,
       '-i',
