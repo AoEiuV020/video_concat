@@ -1,5 +1,6 @@
-import 'package:ffmpeg_kit/ffmpeg_kit.dart';
 import 'package:flutter/material.dart';
+
+import 'package:ffmpeg_kit/ffmpeg_kit.dart';
 
 /// 已选片段列表
 class SegmentList extends StatelessWidget {
@@ -39,8 +40,7 @@ class SegmentList extends StatelessWidget {
           return ListTile(
             leading: CircleAvatar(
               radius: 14,
-              child:
-                  Text('${index + 1}', style: const TextStyle(fontSize: 12)),
+              child: Text('${index + 1}', style: const TextStyle(fontSize: 12)),
             ),
             title: Text(
               '${formatTimestampDisplay(seg.inpoint)}'
@@ -60,10 +60,8 @@ class SegmentList extends StatelessWidget {
           return ListTile(
             leading: CircleAvatar(
               radius: 14,
-              backgroundColor:
-                  Theme.of(context).colorScheme.secondaryContainer,
-              child:
-                  Text('${index + 1}', style: const TextStyle(fontSize: 12)),
+              backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
+              child: Text('${index + 1}', style: const TextStyle(fontSize: 12)),
             ),
             title: Text(
               '${formatTimestampDisplay(pendingInpointUs!)} → …',

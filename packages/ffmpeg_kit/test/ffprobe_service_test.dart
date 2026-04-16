@@ -1,6 +1,7 @@
+import 'package:test/test.dart';
+
 import 'package:ffmpeg_kit/src/ffprobe_service.dart';
 import 'package:ffmpeg_kit/src/models/keyframe.dart';
-import 'package:test/test.dart';
 
 void main() {
   group('FFprobeService.buildFindKeyframesArgs', () {

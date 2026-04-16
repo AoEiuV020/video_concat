@@ -1,5 +1,6 @@
 import 'package:ffmpeg_kit/ffmpeg_kit.dart';
 import 'package:flutter_test/flutter_test.dart';
+
 import 'package:video_concat_app/src/models/models.dart';
 import 'package:video_concat_app/src/utils/chapter_builder.dart';
 
@@ -8,12 +9,18 @@ void main() {
     test('无裁剪：使用 durationUs', () {
       final items = [
         VideoItem(
-          id: '1', filePath: '/a.mp4', fileName: 'a.mp4',
-          fileSize: 100, durationUs: 60000000,
+          id: '1',
+          filePath: '/a.mp4',
+          fileName: 'a.mp4',
+          fileSize: 100,
+          durationUs: 60000000,
         ),
         VideoItem(
-          id: '2', filePath: '/b.mp4', fileName: 'b.mp4',
-          fileSize: 200, durationUs: 120000000,
+          id: '2',
+          filePath: '/b.mp4',
+          fileName: 'b.mp4',
+          fileSize: 200,
+          durationUs: 120000000,
         ),
       ];
       final chapters = buildChaptersFromItems(items);
@@ -27,11 +34,14 @@ void main() {
     test('单片段裁剪', () {
       final items = [
         VideoItem(
-          id: '1', filePath: '/a.mp4', fileName: 'a.mp4',
-          fileSize: 100, durationUs: 120000000,
-          trimConfig: TrimConfig(segments: [
-            TrimSegment(inpoint: 4004000, outpoint: 28028000),
-          ]),
+          id: '1',
+          filePath: '/a.mp4',
+          fileName: 'a.mp4',
+          fileSize: 100,
+          durationUs: 120000000,
+          trimConfig: TrimConfig(
+            segments: [TrimSegment(inpoint: 4004000, outpoint: 28028000)],
+          ),
         ),
       ];
       final chapters = buildChaptersFromItems(items);
@@ -43,12 +53,17 @@ void main() {
     test('多片段裁剪：多个章节', () {
       final items = [
         VideoItem(
-          id: '1', filePath: '/c.mp4', fileName: 'c.mp4',
-          fileSize: 100, durationUs: 120000000,
-          trimConfig: TrimConfig(segments: [
-            TrimSegment(inpoint: 0, outpoint: 15015000),
-            TrimSegment(inpoint: 60060000, outpoint: 90090000),
-          ]),
+          id: '1',
+          filePath: '/c.mp4',
+          fileName: 'c.mp4',
+          fileSize: 100,
+          durationUs: 120000000,
+          trimConfig: TrimConfig(
+            segments: [
+              TrimSegment(inpoint: 0, outpoint: 15015000),
+              TrimSegment(inpoint: 60060000, outpoint: 90090000),
+            ],
+          ),
         ),
       ];
       final chapters = buildChaptersFromItems(items);
@@ -62,7 +77,9 @@ void main() {
     test('缺少 durationUs 返回 null', () {
       final items = [
         VideoItem(
-          id: '1', filePath: '/a.mp4', fileName: 'a.mp4',
+          id: '1',
+          filePath: '/a.mp4',
+          fileName: 'a.mp4',
           fileSize: 100,
         ),
       ];

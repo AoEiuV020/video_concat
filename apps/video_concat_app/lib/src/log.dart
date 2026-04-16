@@ -11,9 +11,6 @@ final logger = Logger();
 /// 设置全局日志默认配置。在 main() 中调用一次。
 void setupLogging() {
   Logger.defaultFilter = () => ProductionFilter();
-  Logger.defaultPrinter = () => PrettyPrinter(
-        methodCount: 0,
-        errorMethodCount: 5,
-        lineLength: 80,
-      );
+  Logger.defaultPrinter = () =>
+      PrettyPrinter(methodCount: 0, errorMethodCount: 5, lineLength: 80);
 }

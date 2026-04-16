@@ -34,10 +34,7 @@ class ProbeComparer {
       if (diff.hasDifferences) compatible = false;
     }
 
-    return ProbeCompareResult(
-      isCompatible: compatible,
-      streamDiffs: diffs,
-    );
+    return ProbeCompareResult(isCompatible: compatible, streamDiffs: diffs);
   }
 
   StreamDiff _compareStream(StreamInfo ref, StreamInfo tgt) {
@@ -51,21 +48,45 @@ class ProbeComparer {
       _addIfDiff(fields, 'pixFmt', ref.pixFmt ?? '', tgt.pixFmt ?? '');
       _addIfDiff(fields, 'frameRate', ref.frameRate ?? '', tgt.frameRate ?? '');
       _addIfDiff(
-          fields, 'colorRange', ref.colorRange ?? '', tgt.colorRange ?? '');
+        fields,
+        'colorRange',
+        ref.colorRange ?? '',
+        tgt.colorRange ?? '',
+      );
       _addIfDiff(
-          fields, 'colorSpace', ref.colorSpace ?? '', tgt.colorSpace ?? '');
-      _addIfDiff(fields, 'colorTransfer', ref.colorTransfer ?? '',
-          tgt.colorTransfer ?? '');
-      _addIfDiff(fields, 'colorPrimaries', ref.colorPrimaries ?? '',
-          tgt.colorPrimaries ?? '');
+        fields,
+        'colorSpace',
+        ref.colorSpace ?? '',
+        tgt.colorSpace ?? '',
+      );
+      _addIfDiff(
+        fields,
+        'colorTransfer',
+        ref.colorTransfer ?? '',
+        tgt.colorTransfer ?? '',
+      );
+      _addIfDiff(
+        fields,
+        'colorPrimaries',
+        ref.colorPrimaries ?? '',
+        tgt.colorPrimaries ?? '',
+      );
     } else if (ref.isAudio) {
       _addIfDiff(fields, 'codecName', ref.codecName, tgt.codecName);
       _addIfDiff(fields, 'profile', ref.profile ?? '', tgt.profile ?? '');
       _addIfDiff(
-          fields, 'sampleRate', ref.sampleRate ?? '', tgt.sampleRate ?? '');
+        fields,
+        'sampleRate',
+        ref.sampleRate ?? '',
+        tgt.sampleRate ?? '',
+      );
       _addIfDiff(fields, 'channels', '${ref.channels}', '${tgt.channels}');
-      _addIfDiff(fields, 'channelLayout', ref.channelLayout ?? '',
-          tgt.channelLayout ?? '');
+      _addIfDiff(
+        fields,
+        'channelLayout',
+        ref.channelLayout ?? '',
+        tgt.channelLayout ?? '',
+      );
     }
 
     // 流类型本身不同也是差异

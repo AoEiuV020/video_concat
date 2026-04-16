@@ -37,17 +37,15 @@ class FFprobeService {
   /// 返回解析后的 [ProbeResult]
   Future<ProbeResult> probe(String filePath) async {
     logger.d('probe file=$filePath');
-    final result = await Process.run(
-      _ffprobePath,
-      [
-        '-v', 'quiet',
-        '-print_format', 'json',
-        '-show_format',
-        '-show_streams',
-        filePath,
-      ],
-      runInShell: Platform.isWindows,
-    );
+    final result = await Process.run(_ffprobePath, [
+      '-v',
+      'quiet',
+      '-print_format',
+      'json',
+      '-show_format',
+      '-show_streams',
+      filePath,
+    ], runInShell: Platform.isWindows);
 
     if (result.exitCode != 0) {
       final error = result.stderr.toString().trim();
@@ -57,8 +55,10 @@ class FFprobeService {
 
     final json = jsonDecode(result.stdout as String) as Map<String, dynamic>;
     final probeResult = ProbeResult.fromJson(json);
-    logger.d('probe 完成 streams=${probeResult.streams.length} '
-        'duration=${probeResult.format.duration}');
+    logger.d(
+      'probe 完成 streams=${probeResult.streams.length} '
+      'duration=${probeResult.format.duration}',
+    );
     return probeResult;
   }
 
@@ -72,15 +72,20 @@ class FFprobeService {
     int? endUs,
   }) {
     return [
-      '-v', 'quiet',
+      '-v',
+      'quiet',
       if (startUs != null && endUs != null) ...[
         '-read_intervals',
         '${formatTimestampUs(startUs)}%${formatTimestampUs(endUs)}',
       ],
-      '-select_streams', 'v:0',
-      '-skip_frame', 'nokey',
-      '-show_entries', 'frame=pts_time,dts_time',
-      '-of', 'csv=p=0',
+      '-select_streams',
+      'v:0',
+      '-skip_frame',
+      'nokey',
+      '-show_entries',
+      'frame=pts_time,dts_time',
+      '-of',
+      'csv=p=0',
       filePath,
     ];
   }
@@ -127,8 +132,10 @@ class FFprobeService {
       endUs: endUs,
     );
 
-    logger.d('findKeyframes file=$filePath '
-        'window=[${startUs ?? "null"}, ${endUs ?? "null"}]');
+    logger.d(
+      'findKeyframes file=$filePath '
+      'window=[${startUs ?? "null"}, ${endUs ?? "null"}]',
+    );
 
     final result = await Process.run(
       _ffprobePath,
@@ -138,8 +145,10 @@ class FFprobeService {
 
     if (result.exitCode != 0) {
       final error = result.stderr.toString().trim();
-      logger.e('findKeyframes 失败 exitCode=${result.exitCode} '
-          'error=$error');
+      logger.e(
+        'findKeyframes 失败 exitCode=${result.exitCode} '
+        'error=$error',
+      );
       throw Exception('ffprobe 关键帧探测失败: $error');
     }
 

@@ -30,8 +30,10 @@ Future<VideoInfoData> videoInfo(
     ffprobe.deriveFromFFmpegPath(ffmpeg.ffmpegPath);
 
     final result = await ffprobe.probe(filePath);
-    logger.d('videoInfo 探测完成 '
-        'duration=${result.format.duration}');
+    logger.d(
+      'videoInfo 探测完成 '
+      'duration=${result.format.duration}',
+    );
 
     if (refPath == null || refPath.isEmpty) {
       return VideoInfoData(result: result);
@@ -39,8 +41,10 @@ Future<VideoInfoData> videoInfo(
 
     final refResult = await ffprobe.probe(refPath);
     final compareResult = ProbeComparer().compare(refResult, result);
-    logger.d('videoInfo 对比完成 '
-        'compatible=${compareResult.isCompatible}');
+    logger.d(
+      'videoInfo 对比完成 '
+      'compatible=${compareResult.isCompatible}',
+    );
     return VideoInfoData(result: result, compareResult: compareResult);
   } catch (e, s) {
     logger.e('videoInfo 失败 filePath=$filePath', error: e, stackTrace: s);

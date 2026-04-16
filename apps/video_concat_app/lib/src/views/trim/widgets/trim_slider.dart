@@ -1,5 +1,6 @@
-import 'package:ffmpeg_kit/ffmpeg_kit.dart';
 import 'package:flutter/material.dart';
+
+import 'package:ffmpeg_kit/ffmpeg_kit.dart';
 
 /// 裁剪进度条
 class TrimSlider extends StatelessWidget {
@@ -37,8 +38,7 @@ class TrimSlider extends StatelessWidget {
     final max = durationUs.toDouble();
     if (max <= 0) return const SizedBox.shrink();
 
-    final value =
-        (draggingPositionUs ?? currentPositionUs).toDouble();
+    final value = (draggingPositionUs ?? currentPositionUs).toDouble();
 
     return Column(
       children: [

@@ -3,13 +3,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'generate_result.freezed.dart';
 
 /// 生成状态
-enum GenerateState {
-  idle,
-  running,
-  success,
-  failed,
-  cancelled,
-}
+enum GenerateState { idle, running, success, failed, cancelled }
 
 /// 生成结果
 @freezed

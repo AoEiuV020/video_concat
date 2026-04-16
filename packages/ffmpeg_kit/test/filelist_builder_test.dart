@@ -1,15 +1,14 @@
+import 'package:test/test.dart';
+
 import 'package:ffmpeg_kit/src/filelist_builder.dart';
 import 'package:ffmpeg_kit/src/models/concat_entry.dart';
 import 'package:ffmpeg_kit/src/models/trim_config.dart';
 import 'package:ffmpeg_kit/src/models/trim_segment.dart';
-import 'package:test/test.dart';
 
 void main() {
   group('buildFilelistContent', () {
     test('无裁剪：单条 file 行', () {
-      final entries = [
-        ConcatEntry(filePath: '/path/to/A.mp4'),
-      ];
+      final entries = [ConcatEntry(filePath: '/path/to/A.mp4')];
       expect(buildFilelistContent(entries), "file '/path/to/A.mp4'");
     });
 
@@ -28,9 +27,9 @@ void main() {
       final entries = [
         ConcatEntry(
           filePath: '/path/B.mp4',
-          trimConfig: TrimConfig(segments: [
-            TrimSegment(inpoint: 4004000, outpoint: 28028000),
-          ]),
+          trimConfig: TrimConfig(
+            segments: [TrimSegment(inpoint: 4004000, outpoint: 28028000)],
+          ),
           durationUs: 120000000,
         ),
       ];
@@ -44,9 +43,9 @@ void main() {
       final entries = [
         ConcatEntry(
           filePath: '/path/C.mp4',
-          trimConfig: TrimConfig(segments: [
-            TrimSegment(inpoint: 0, outpoint: 15015000),
-          ]),
+          trimConfig: TrimConfig(
+            segments: [TrimSegment(inpoint: 0, outpoint: 15015000)],
+          ),
           durationUs: 120000000,
         ),
       ];
@@ -60,9 +59,9 @@ void main() {
       final entries = [
         ConcatEntry(
           filePath: '/path/D.mp4',
-          trimConfig: TrimConfig(segments: [
-            TrimSegment(inpoint: 5000000, outpoint: 120000000),
-          ]),
+          trimConfig: TrimConfig(
+            segments: [TrimSegment(inpoint: 5000000, outpoint: 120000000)],
+          ),
           durationUs: 120000000,
         ),
       ];
@@ -75,10 +74,12 @@ void main() {
       final entries = [
         ConcatEntry(
           filePath: '/path/C.mp4',
-          trimConfig: TrimConfig(segments: [
-            TrimSegment(inpoint: 0, outpoint: 15015000),
-            TrimSegment(inpoint: 60060000, outpoint: 90090000),
-          ]),
+          trimConfig: TrimConfig(
+            segments: [
+              TrimSegment(inpoint: 0, outpoint: 15015000),
+              TrimSegment(inpoint: 60060000, outpoint: 90090000),
+            ],
+          ),
           durationUs: 120000000,
         ),
       ];
@@ -99,17 +100,19 @@ void main() {
         ConcatEntry(filePath: 'A.mp4'),
         ConcatEntry(
           filePath: 'B.mp4',
-          trimConfig: TrimConfig(segments: [
-            TrimSegment(inpoint: 4004000, outpoint: 28028000),
-          ]),
+          trimConfig: TrimConfig(
+            segments: [TrimSegment(inpoint: 4004000, outpoint: 28028000)],
+          ),
           durationUs: 120000000,
         ),
         ConcatEntry(
           filePath: 'C.mp4',
-          trimConfig: TrimConfig(segments: [
-            TrimSegment(inpoint: 0, outpoint: 15015000),
-            TrimSegment(inpoint: 60060000, outpoint: 90090000),
-          ]),
+          trimConfig: TrimConfig(
+            segments: [
+              TrimSegment(inpoint: 0, outpoint: 15015000),
+              TrimSegment(inpoint: 60060000, outpoint: 90090000),
+            ],
+          ),
           durationUs: 120000000,
         ),
       ];
@@ -120,26 +123,17 @@ void main() {
       expect(content, contains('outpoint 28.028000'));
       // C 第一片段无 inpoint
       final lines = content.split('\n');
-      final cFirstIdx = lines.indexWhere(
-        (l) => l == "file 'C.mp4'",
-      );
+      final cFirstIdx = lines.indexWhere((l) => l == "file 'C.mp4'");
       expect(lines[cFirstIdx + 1], 'outpoint 15.015000');
     });
 
     test('Windows 路径反斜杠转正斜杠', () {
-      final entries = [
-        ConcatEntry(filePath: r'C:\Users\test\video.mp4'),
-      ];
-      expect(
-        buildFilelistContent(entries),
-        "file 'C:/Users/test/video.mp4'",
-      );
+      final entries = [ConcatEntry(filePath: r'C:\Users\test\video.mp4')];
+      expect(buildFilelistContent(entries), "file 'C:/Users/test/video.mp4'");
     });
 
     test("路径含单引号时正确转义", () {
-      final entries = [
-        ConcatEntry(filePath: "/path/it's a video.mp4"),
-      ];
+      final entries = [ConcatEntry(filePath: "/path/it's a video.mp4")];
       expect(
         buildFilelistContent(entries),
         "file '/path/it'\\''s a video.mp4'",
@@ -150,13 +144,15 @@ void main() {
       final entries = [
         ConcatEntry(
           filePath: '/path/E.mp4',
-          trimConfig: TrimConfig(segments: [
-            TrimSegment(
-              inpoint: 0,
-              outpoint: 2083000,
-              outpointDtsUs: 2075000,
-            ),
-          ]),
+          trimConfig: TrimConfig(
+            segments: [
+              TrimSegment(
+                inpoint: 0,
+                outpoint: 2083000,
+                outpointDtsUs: 2075000,
+              ),
+            ],
+          ),
           durationUs: 120000000,
         ),
       ];
@@ -169,9 +165,9 @@ void main() {
       final entries = [
         ConcatEntry(
           filePath: '/path/F.mp4',
-          trimConfig: TrimConfig(segments: [
-            TrimSegment(inpoint: 0, outpoint: 2083000),
-          ]),
+          trimConfig: TrimConfig(
+            segments: [TrimSegment(inpoint: 0, outpoint: 2083000)],
+          ),
           durationUs: 120000000,
         ),
       ];

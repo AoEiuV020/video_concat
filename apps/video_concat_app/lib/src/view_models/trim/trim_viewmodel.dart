@@ -56,8 +56,10 @@ class TrimViewModel extends _$TrimViewModel {
     // 加载已有的裁剪配置
     final existingSegments = item.trimConfig?.segments ?? [];
 
-    logger.d('build videoId=$videoId durationUs=$durationUs '
-        'filePath=${item.filePath} segments=${existingSegments.length}');
+    logger.d(
+      'build videoId=$videoId durationUs=$durationUs '
+      'filePath=${item.filePath} segments=${existingSegments.length}',
+    );
 
     // 异步初始化
     if (durationUs > 0) {
@@ -66,10 +68,7 @@ class TrimViewModel extends _$TrimViewModel {
           await _init();
         } catch (e, s) {
           logger.e('_init 未捕获异常', error: e, stackTrace: s);
-          state = state.copyWith(
-            isLoading: false,
-            errorMessage: '初始化失败: $e',
-          );
+          state = state.copyWith(isLoading: false, errorMessage: '初始化失败: $e');
         }
       });
     } else {
@@ -105,13 +104,12 @@ class TrimViewModel extends _$TrimViewModel {
     if (_disposed) return;
     final nearest = _cache.findNearest(0);
 
-    logger.d('_init nearest=$nearest '
-        '缓存关键帧数=${_cache.keyframes.length}');
-
-    state = state.copyWith(
-      isLoading: false,
-      currentPositionUs: nearest ?? 0,
+    logger.d(
+      '_init nearest=$nearest '
+      '缓存关键帧数=${_cache.keyframes.length}',
     );
+
+    state = state.copyWith(isLoading: false, currentPositionUs: nearest ?? 0);
 
     // 跳到首个关键帧
     if (nearest != null && nearest > 0) {
@@ -126,9 +124,7 @@ class TrimViewModel extends _$TrimViewModel {
     _positionSub = player.stream.position.listen((position) {
       _completePreviewPendingIfMatched(position.inMicroseconds);
       if (!_disposed && state.isPlaying && state.draggingPositionUs == null) {
-        state = state.copyWith(
-          currentPositionUs: position.inMicroseconds,
-        );
+        state = state.copyWith(currentPositionUs: position.inMicroseconds);
       }
     });
 
@@ -143,10 +139,7 @@ class TrimViewModel extends _$TrimViewModel {
     _errorSub = player.stream.error.listen((error) {
       if (_disposed) return;
       logger.e('播放器错误 videoId=${state.videoId}', error: error);
-      state = state.copyWith(
-        isPlaying: false,
-        errorMessage: '播放器错误: $error',
-      );
+      state = state.copyWith(isPlaying: false, errorMessage: '播放器错误: $error');
     });
 
     // 播放结束时停在虚拟末尾
@@ -240,10 +233,7 @@ class TrimViewModel extends _$TrimViewModel {
   void onSliderDragging(int positionUs) {
     _snapGeneration++;
     _clearPreviewPending();
-    state = state.copyWith(
-      draggingPositionUs: positionUs,
-      isSnapping: false,
-    );
+    state = state.copyWith(draggingPositionUs: positionUs, isSnapping: false);
 
     // 拖动时暂停播放
     if (state.isPlaying) {
@@ -252,9 +242,9 @@ class TrimViewModel extends _$TrimViewModel {
     }
 
     // 即时跳转播放器（拖动中实时预览）
-    ref.read(trimPlayerProvider(state.videoId)).seek(
-      Duration(microseconds: positionUs),
-    );
+    ref
+        .read(trimPlayerProvider(state.videoId))
+        .seek(Duration(microseconds: positionUs));
 
     // 防抖更新关键帧吸附信息
     _debounceTimer?.cancel();
@@ -408,9 +398,11 @@ class TrimViewModel extends _$TrimViewModel {
     final outpoint = isVirtualEnd ? state.durationUs : current;
     final outpointDts = isVirtualEnd ? null : _cache.getDts(current);
 
-    logger.d('setOutpoint current=$current outpoint=$outpoint '
-        'pending=$pending outpointDts=$outpointDts '
-        'isVirtualEnd=$isVirtualEnd');
+    logger.d(
+      'setOutpoint current=$current outpoint=$outpoint '
+      'pending=$pending outpointDts=$outpointDts '
+      'isVirtualEnd=$isVirtualEnd',
+    );
 
     if (pending != null) {
       // 有 pending inpoint → 创建新片段
@@ -429,10 +421,7 @@ class TrimViewModel extends _$TrimViewModel {
       }
       final segments = [...state.segments, newSeg]
         ..sort((a, b) => a.inpoint.compareTo(b.inpoint));
-      state = state.copyWith(
-        segments: segments,
-        pendingInpointUs: null,
-      );
+      state = state.copyWith(segments: segments, pendingInpointUs: null);
     } else {
       // 无 pending → 更新最后一个片段的 outpoint
       if (state.segments.isEmpty) {
@@ -478,10 +467,7 @@ class TrimViewModel extends _$TrimViewModel {
     if (state.segments.isEmpty) {
       homeVm.setTrimConfig(state.videoId, null);
     } else {
-      homeVm.setTrimConfig(
-        state.videoId,
-        TrimConfig(segments: state.segments),
-      );
+      homeVm.setTrimConfig(state.videoId, TrimConfig(segments: state.segments));
     }
   }
 
@@ -502,8 +488,10 @@ class TrimViewModel extends _$TrimViewModel {
       final distToKf = positionUs - nearest;
       final distToEnd = state.durationUs - positionUs;
       if (distToEnd <= distToKf) {
-        logger.d('_resolveSnapTarget → 虚拟末尾 '
-            '(nearest=$nearest distToKf=$distToKf distToEnd=$distToEnd)');
+        logger.d(
+          '_resolveSnapTarget → 虚拟末尾 '
+          '(nearest=$nearest distToKf=$distToKf distToEnd=$distToEnd)',
+        );
         return state.durationUs;
       }
     }
@@ -523,8 +511,10 @@ class TrimViewModel extends _$TrimViewModel {
       final startUs = (targetUs - windowUs).clamp(0, state.durationUs);
       final endUs = (targetUs + windowUs).clamp(0, state.durationUs);
 
-      logger.d('_ensureCovered retry=$retry '
-          'window=[$startUs, $endUs]');
+      logger.d(
+        '_ensureCovered retry=$retry '
+        'window=[$startUs, $endUs]',
+      );
 
       try {
         final ffprobe = _getFfprobeService();
@@ -536,8 +526,10 @@ class TrimViewModel extends _$TrimViewModel {
           endUs: endUs,
         );
 
-        logger.d('findKeyframes 返回 ${keyframes.length} 个关键帧'
-            '${keyframes.isNotEmpty ? ": ${keyframes.take(5).map((k) => k.ptsUs)}" : ""}');
+        logger.d(
+          'findKeyframes 返回 ${keyframes.length} 个关键帧'
+          '${keyframes.isNotEmpty ? ": ${keyframes.take(5).map((k) => k.ptsUs)}" : ""}',
+        );
 
         _cache.addRange(startUs, endUs, keyframes);
 

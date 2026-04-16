@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+
 import 'package:video_concat_app/src/view_models/trim/trim_playback_binding_provider.dart';
 import 'package:video_concat_app/src/view_models/trim/trim_state.dart';
 import 'package:video_concat_app/src/view_models/trim/trim_viewmodel.dart';
@@ -10,10 +12,7 @@ final class _ProviderAddObserver extends ProviderObserver {
   final addedProviders = <String>[];
 
   @override
-  void didAddProvider(
-    ProviderObserverContext context,
-    Object? value,
-  ) {
+  void didAddProvider(ProviderObserverContext context, Object? value) {
     addedProviders.add(context.provider.toString());
   }
 }
@@ -46,9 +45,7 @@ void main() {
             trimViewModelProvider(videoId).overrideWith(_TestTrimViewModel.new),
             trimPlaybackBindingProvider(videoId).overrideWithValue(null),
           ],
-          child: const MaterialApp(
-            home: TrimPage(videoId: videoId),
-          ),
+          child: const MaterialApp(home: TrimPage(videoId: videoId)),
         ),
       );
 

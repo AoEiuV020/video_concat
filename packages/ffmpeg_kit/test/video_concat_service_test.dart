@@ -1,5 +1,6 @@
-import 'package:ffmpeg_kit/src/video_concat_service.dart';
 import 'package:test/test.dart';
+
+import 'package:ffmpeg_kit/src/video_concat_service.dart';
 
 void main() {
   // 测试从 List<String> 到 List<ConcatEntry> 的向后兼容转换

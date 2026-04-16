@@ -63,10 +63,7 @@ class VideoListTile extends StatelessWidget {
               child: Icon(Icons.warning, color: Colors.red, size: 20),
             ),
           IconButton(
-            icon: Icon(
-              Icons.content_cut,
-              color: hasTrim ? Colors.blue : null,
-            ),
+            icon: Icon(Icons.content_cut, color: hasTrim ? Colors.blue : null),
             onPressed: onTrim,
             tooltip: '裁剪',
           ),

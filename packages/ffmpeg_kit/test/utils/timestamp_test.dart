@@ -1,5 +1,6 @@
-import 'package:ffmpeg_kit/src/utils/timestamp.dart';
 import 'package:test/test.dart';
+
+import 'package:ffmpeg_kit/src/utils/timestamp.dart';
 
 void main() {
   group('parseTimestampUs', () {

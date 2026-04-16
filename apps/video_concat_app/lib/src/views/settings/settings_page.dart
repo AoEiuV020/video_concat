@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../view_models/settings/settings_viewmodel.dart';
@@ -13,9 +14,7 @@ class SettingsPage extends ConsumerWidget {
     final vm = ref.read(settingsViewModelProvider.notifier);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('设置'),
-      ),
+      appBar: AppBar(title: const Text('设置')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -78,14 +77,14 @@ class SettingsPage extends ConsumerWidget {
                     state.isValidating
                         ? '正在检查...'
                         : state.isFFmpegValid
-                            ? 'FFmpeg 可用'
-                            : 'FFmpeg 不可用，请检查路径',
+                        ? 'FFmpeg 可用'
+                        : 'FFmpeg 不可用，请检查路径',
                     style: TextStyle(
                       color: state.isValidating
                           ? Colors.grey
                           : state.isFFmpegValid
-                              ? Colors.green
-                              : Colors.red,
+                          ? Colors.green
+                          : Colors.red,
                       fontSize: 12,
                     ),
                   ),

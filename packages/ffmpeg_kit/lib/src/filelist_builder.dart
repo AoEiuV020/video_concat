@@ -33,11 +33,12 @@ String buildFilelistContent(List<ConcatEntry> entries) {
           buffer.write('\ninpoint ${formatTimestampUs(segment.inpoint)}');
         }
 
-        final shouldOmitOutpoint = entry.durationUs != null &&
-            segment.outpoint >= entry.durationUs!;
+        final shouldOmitOutpoint =
+            entry.durationUs != null && segment.outpoint >= entry.durationUs!;
         if (!shouldOmitOutpoint) {
           buffer.write(
-              '\noutpoint ${formatTimestampUs(segment.effectiveOutpoint)}');
+            '\noutpoint ${formatTimestampUs(segment.effectiveOutpoint)}',
+          );
         }
 
         first = false;

@@ -44,7 +44,9 @@ String formatFrameRate(String? frameRate) {
   if (parts.length == 2) {
     final num = int.tryParse(parts[0]) ?? 0;
     final den = int.tryParse(parts[1]) ?? 1;
-    if (den > 0) return '${(num / den).toStringAsFixed(num % den == 0 ? 0 : 2)} fps';
+    if (den > 0) {
+      return '${(num / den).toStringAsFixed(num % den == 0 ? 0 : 2)} fps';
+    }
   }
 
   return '$frameRate fps';

@@ -23,9 +23,7 @@ class SettingsViewModel extends _$SettingsViewModel {
       final path = await prefs.getFFmpegPath();
 
       if (path != null) {
-        state = state.copyWith(
-          settings: AppSettings(ffmpegPath: path),
-        );
+        state = state.copyWith(settings: AppSettings(ffmpegPath: path));
         logger.d('已加载 ffmpegPath=$path');
       }
 
@@ -42,19 +40,15 @@ class SettingsViewModel extends _$SettingsViewModel {
       ffmpeg.ffmpegPath = state.settings.ffmpegPath;
       final isValid = await ffmpeg.validate();
 
-      logger.d('验证 ffmpegPath=${state.settings.ffmpegPath} '
-          'isValid=$isValid');
-
-      state = state.copyWith(
-        isFFmpegValid: isValid,
-        isValidating: false,
+      logger.d(
+        '验证 ffmpegPath=${state.settings.ffmpegPath} '
+        'isValid=$isValid',
       );
+
+      state = state.copyWith(isFFmpegValid: isValid, isValidating: false);
     } catch (e, s) {
       logger.e('_validateCurrentPath 失败', error: e, stackTrace: s);
-      state = state.copyWith(
-        isFFmpegValid: false,
-        isValidating: false,
-      );
+      state = state.copyWith(isFFmpegValid: false, isValidating: false);
     }
   }
 
@@ -62,9 +56,7 @@ class SettingsViewModel extends _$SettingsViewModel {
   Future<void> updateFFmpegPath(String path) async {
     logger.d('updateFFmpegPath path=$path');
     try {
-      state = state.copyWith(
-        settings: AppSettings(ffmpegPath: path),
-      );
+      state = state.copyWith(settings: AppSettings(ffmpegPath: path));
 
       await ref.read(preferencesRepositoryProvider).saveFFmpegPath(path);
       await _validateCurrentPath();

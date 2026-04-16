@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+
 import 'package:video_concat_app/src/view_models/trim/trim_state.dart';
 
 void main() {

@@ -1,10 +1,11 @@
-import 'package:ffmpeg_kit/ffmpeg_kit.dart';
 import 'package:flutter/material.dart';
+
+import 'package:ffmpeg_kit/ffmpeg_kit.dart';
 
 import '../../../utils/format_utils.dart';
 import '../../../view_models/video_info/video_info_viewmodel.dart';
-import 'video_info_playback_surface.dart';
 import 'video_info_playback_section.dart';
+import 'video_info_playback_surface.dart';
 
 /// 视频信息页 loaded 态内容。
 class VideoInfoContent extends StatelessWidget {
@@ -32,7 +33,8 @@ class VideoInfoContent extends StatelessWidget {
         VideoInfoPlaybackSection(
           hasVideoStream: hasVideoStream,
           preview: hasVideoStream
-              ? (playbackPreview ?? VideoInfoPlaybackSurface(filePath: filePath))
+              ? (playbackPreview ??
+                    VideoInfoPlaybackSurface(filePath: filePath))
               : null,
         ),
         const SizedBox(height: 12),

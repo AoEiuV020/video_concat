@@ -20,29 +20,30 @@ Future<List<ChapterInfo>?> buildChapters({
   // 回退：逐个探测
   final chapters = <ChapterInfo>[];
   for (final item in items) {
-    final nameWithoutExt =
-        item.fileName.replaceAll(RegExp(r'\.[^.]+$'), '');
+    final nameWithoutExt = item.fileName.replaceAll(RegExp(r'\.[^.]+$'), '');
     final segments = item.trimConfig?.segments ?? [];
 
     if (segments.isEmpty) {
       try {
-        final durationUs = item.durationUs ??
+        final durationUs =
+            item.durationUs ??
             ((await ffprobe.probe(item.filePath)).format.duration * 1000000)
                 .round();
-        chapters.add(ChapterInfo(
-          title: nameWithoutExt,
-          duration: durationUs / 1000000,
-        ));
+        chapters.add(
+          ChapterInfo(title: nameWithoutExt, duration: durationUs / 1000000),
+        );
       } catch (_) {
         return null;
       }
     } else {
       for (var i = 0; i < segments.length; i++) {
         final suffix = segments.length > 1 ? ' #${i + 1}' : '';
-        chapters.add(ChapterInfo(
-          title: '$nameWithoutExt$suffix',
-          duration: segments[i].durationUs / 1000000,
-        ));
+        chapters.add(
+          ChapterInfo(
+            title: '$nameWithoutExt$suffix',
+            duration: segments[i].durationUs / 1000000,
+          ),
+        );
       }
     }
   }
@@ -56,23 +57,26 @@ Future<List<ChapterInfo>?> buildChapters({
 List<ChapterInfo>? buildChaptersFromItems(List<VideoItem> items) {
   final chapters = <ChapterInfo>[];
   for (final item in items) {
-    final nameWithoutExt =
-        item.fileName.replaceAll(RegExp(r'\.[^.]+$'), '');
+    final nameWithoutExt = item.fileName.replaceAll(RegExp(r'\.[^.]+$'), '');
     final segments = item.trimConfig?.segments ?? [];
 
     if (segments.isEmpty) {
       if (item.durationUs == null) return null;
-      chapters.add(ChapterInfo(
-        title: nameWithoutExt,
-        duration: item.durationUs! / 1000000,
-      ));
+      chapters.add(
+        ChapterInfo(
+          title: nameWithoutExt,
+          duration: item.durationUs! / 1000000,
+        ),
+      );
     } else {
       for (var i = 0; i < segments.length; i++) {
         final suffix = segments.length > 1 ? ' #${i + 1}' : '';
-        chapters.add(ChapterInfo(
-          title: '$nameWithoutExt$suffix',
-          duration: segments[i].durationUs / 1000000,
-        ));
+        chapters.add(
+          ChapterInfo(
+            title: '$nameWithoutExt$suffix',
+            duration: segments[i].durationUs / 1000000,
+          ),
+        );
       }
     }
   }

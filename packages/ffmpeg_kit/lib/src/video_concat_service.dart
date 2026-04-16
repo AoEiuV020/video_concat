@@ -26,7 +26,7 @@ class VideoConcatService {
   final FFmpegService _ffmpegService;
 
   VideoConcatService({required FFmpegService ffmpegService})
-      : _ffmpegService = ffmpegService;
+    : _ffmpegService = ffmpegService;
 
   /// 合并视频文件（支持裁剪）
   ///
@@ -57,8 +57,7 @@ class VideoConcatService {
     try {
       final hasNoAudio = extraArguments.contains('-an');
       final audioArgs = hasNoAudio ? <String>['-an'] : ['-acodec', 'copy'];
-      final filteredExtra =
-          extraArguments.where((a) => a != '-an').toList();
+      final filteredExtra = extraArguments.where((a) => a != '-an').toList();
 
       final chapterArgs = <String>[];
       if (chapters != null && chapters.isNotEmpty) {
@@ -72,11 +71,15 @@ class VideoConcatService {
         arguments: [
           '-y',
           ...preInputArguments,
-          '-safe', '0',
-          '-f', 'concat',
-          '-i', listFile.path,
+          '-safe',
+          '0',
+          '-f',
+          'concat',
+          '-i',
+          listFile.path,
           ...chapterArgs,
-          '-vcodec', 'copy',
+          '-vcodec',
+          'copy',
           ...audioArgs,
           ...filteredExtra,
           normalizedOutput,

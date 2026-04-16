@@ -1,5 +1,6 @@
 import 'package:ffmpeg_kit/ffmpeg_kit.dart';
 import 'package:flutter_test/flutter_test.dart';
+
 import 'package:video_concat_app/src/utils/keyframe_cache.dart';
 
 /// PTS-only 关键帧快捷构造
@@ -170,11 +171,11 @@ void main() {
   group('KeyframeCache.getDts', () {
     test('返回对应的 DTS', () {
       final cache = KeyframeCache(durationUs: 120000000);
-      cache.addRange(0, 30000000, _kfsDts([
-        (0, null),
-        (2083000, 2075000),
-        (4167000, 4158000),
-      ]));
+      cache.addRange(
+        0,
+        30000000,
+        _kfsDts([(0, null), (2083000, 2075000), (4167000, 4158000)]),
+      );
       expect(cache.getDts(2083000), 2075000);
       expect(cache.getDts(4167000), 4158000);
     });

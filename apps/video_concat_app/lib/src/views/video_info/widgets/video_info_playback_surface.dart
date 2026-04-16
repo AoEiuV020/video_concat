@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
@@ -49,7 +50,9 @@ class _VideoInfoPlaybackSurfaceState
       return Text('播放器初始化失败: $_error');
     }
 
-    final controller = ref.watch(videoInfoVideoControllerProvider(widget.filePath));
+    final controller = ref.watch(
+      videoInfoVideoControllerProvider(widget.filePath),
+    );
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(12),

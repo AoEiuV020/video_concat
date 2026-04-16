@@ -9,10 +9,7 @@ class ProbeResult {
   /// 媒体流列表
   final List<StreamInfo> streams;
 
-  const ProbeResult({
-    required this.format,
-    required this.streams,
-  });
+  const ProbeResult({required this.format, required this.streams});
 
   /// 从 ffprobe JSON 完整输出解析。
   factory ProbeResult.fromJson(Map<String, dynamic> json) {

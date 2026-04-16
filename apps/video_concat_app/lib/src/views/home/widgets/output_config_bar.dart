@@ -9,18 +9,16 @@ class OutputConfigBar extends StatelessWidget {
   final HomeState state;
   final HomeViewModel vm;
 
-  const OutputConfigBar({
-    super.key,
-    required this.state,
-    required this.vm,
-  });
+  const OutputConfigBar({super.key, required this.state, required this.vm});
 
   static const _extensions = ['mp4', 'mkv', 'avi', 'mov', 'webm'];
 
   @override
   Widget build(BuildContext context) {
-    final totalSize =
-        state.videoItems.fold<int>(0, (sum, item) => sum + item.fileSize);
+    final totalSize = state.videoItems.fold<int>(
+      0,
+      (sum, item) => sum + item.fileSize,
+    );
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -30,17 +28,19 @@ class OutputConfigBar extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
             child: TextField(
-              controller: TextEditingController(
-                text: state.outputConfig.baseName,
-              )..selection = TextSelection.fromPosition(
-                  TextPosition(offset: state.outputConfig.baseName.length),
-                ),
+              controller:
+                  TextEditingController(text: state.outputConfig.baseName)
+                    ..selection = TextSelection.fromPosition(
+                      TextPosition(offset: state.outputConfig.baseName.length),
+                    ),
               decoration: const InputDecoration(
                 isDense: true,
                 hintText: '文件名',
                 border: OutlineInputBorder(),
-                contentPadding:
-                    EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
               ),
               onChanged: vm.updateOutputBaseName,
               enabled: !state.isGenerating,
@@ -67,8 +67,8 @@ class OutputConfigBar extends StatelessWidget {
             Text(
               '≈ ${formatFileSize(totalSize)}',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.secondary,
-                  ),
+                color: Theme.of(context).colorScheme.secondary,
+              ),
             ),
           ],
           const SizedBox(width: 8),
@@ -87,17 +87,17 @@ class OutputConfigBar extends StatelessWidget {
           onChanged: state.isGenerating
               ? null
               : (v) => vm.updateExportOptions(
-                    state.exportOptions.copyWith(showOptions: v ?? false),
-                  ),
+                  state.exportOptions.copyWith(showOptions: v ?? false),
+                ),
         ),
         GestureDetector(
           onTap: state.isGenerating
               ? null
               : () => vm.updateExportOptions(
-                    state.exportOptions.copyWith(
-                      showOptions: !state.exportOptions.showOptions,
-                    ),
+                  state.exportOptions.copyWith(
+                    showOptions: !state.exportOptions.showOptions,
                   ),
+                ),
           child: const Text('导出选项'),
         ),
       ],

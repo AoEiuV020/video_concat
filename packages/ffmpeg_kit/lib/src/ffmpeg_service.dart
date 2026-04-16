@@ -106,29 +106,34 @@ class FFmpegService {
 
     final vf = isHdr
         ? 'zscale=t=linear:npl=100,format=gbrpf32le,'
-            'zscale=p=bt709,tonemap=tonemap=hable:desat=0,'
-            'zscale=t=bt709:m=bt709:r=tv,format=yuv420p,'
-            'scale=$maxWidth:-1'
+              'zscale=p=bt709,tonemap=tonemap=hable:desat=0,'
+              'zscale=t=bt709:m=bt709:r=tv,format=yuv420p,'
+              'scale=$maxWidth:-1'
         : 'scale=$maxWidth:-1';
 
-    final result = await Process.run(
-      _ffmpegPath,
-      [
-        '-ss', timestampStr,
-        '-i', filePath,
-        '-vframes', '1',
-        '-q:v', '5',
-        '-vf', vf,
-        '-f', 'image2pipe',
-        '-vcodec', 'mjpeg',
-        'pipe:1',
-      ],
-      stdoutEncoding: null,
-    );
+    final result = await Process.run(_ffmpegPath, [
+      '-ss',
+      timestampStr,
+      '-i',
+      filePath,
+      '-vframes',
+      '1',
+      '-q:v',
+      '5',
+      '-vf',
+      vf,
+      '-f',
+      'image2pipe',
+      '-vcodec',
+      'mjpeg',
+      'pipe:1',
+    ], stdoutEncoding: null);
 
     if (result.exitCode != 0) {
-      logger.w('extractFrame 失败 exitCode=${result.exitCode} '
-          'stderr=${result.stderr}');
+      logger.w(
+        'extractFrame 失败 exitCode=${result.exitCode} '
+        'stderr=${result.stderr}',
+      );
       return null;
     }
 

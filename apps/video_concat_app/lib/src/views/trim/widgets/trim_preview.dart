@@ -1,5 +1,6 @@
-import 'package:ffmpeg_kit/ffmpeg_kit.dart';
 import 'package:flutter/material.dart';
+
+import 'package:ffmpeg_kit/ffmpeg_kit.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
@@ -37,10 +38,7 @@ class TrimPreview extends ConsumerWidget {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              Video(
-                controller: controller,
-                controls: NoVideoControls,
-              ),
+              Video(controller: controller, controls: NoVideoControls),
               if (isPreviewPending)
                 Container(
                   color: Colors.black26,

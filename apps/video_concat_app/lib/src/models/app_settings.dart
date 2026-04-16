@@ -5,7 +5,5 @@ part 'app_settings.freezed.dart';
 /// 应用设置
 @freezed
 abstract class AppSettings with _$AppSettings {
-  const factory AppSettings({
-    required String ffmpegPath,
-  }) = _AppSettings;
+  const factory AppSettings({required String ffmpegPath}) = _AppSettings;
 }

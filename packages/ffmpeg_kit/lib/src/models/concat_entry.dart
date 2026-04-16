@@ -11,9 +11,5 @@ class ConcatEntry {
   /// 视频总时长（微秒），用于判断是否省略 outpoint
   final int? durationUs;
 
-  const ConcatEntry({
-    required this.filePath,
-    this.trimConfig,
-    this.durationUs,
-  });
+  const ConcatEntry({required this.filePath, this.trimConfig, this.durationUs});
 }
