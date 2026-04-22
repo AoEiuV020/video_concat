@@ -229,7 +229,7 @@ return $default(_that.showOptions,_that.rotation,_that.removeAudio,_that.removeS
 
 
 class _ExportOptions extends ExportOptions {
-  const _ExportOptions({this.showOptions = false, this.rotation = null, this.removeAudio = false, this.removeSubtitles = false, this.fastStart = false, this.stripMetadata = false, this.addChapters = false, this.autoOpenVideoInfo = false, this.enableSegmentOutput = false, this.segmentDurationText = '', this.segmentFilenameTemplate = '%filename%_%03d', this.rememberChoices = false}): super._();
+  const _ExportOptions({this.showOptions = false, this.rotation = null, this.removeAudio = false, this.removeSubtitles = false, this.fastStart = false, this.stripMetadata = false, this.addChapters = false, this.autoOpenVideoInfo = false, this.enableSegmentOutput = false, this.segmentDurationText = '00:02:30.000', this.segmentFilenameTemplate = '%filename%_%03d', this.rememberChoices = false}): super._();
   
 
 /// 是否展开导出选项面板

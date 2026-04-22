@@ -177,6 +177,7 @@ class ExportOptionsPanel extends StatelessWidget {
         onChanged: onChanged,
         decoration: InputDecoration(
           labelText: label,
+          hintText: 'HH:MM:SS.mmm',
           isDense: true,
           border: const OutlineInputBorder(),
         ),

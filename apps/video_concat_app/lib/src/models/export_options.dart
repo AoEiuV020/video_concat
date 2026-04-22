@@ -34,7 +34,7 @@ abstract class ExportOptions with _$ExportOptions {
     @Default(false) bool enableSegmentOutput,
 
     /// 分段时长输入文本
-    @Default('') String segmentDurationText,
+    @Default('00:02:30.000') String segmentDurationText,
 
     /// 分段文件名模板
     @Default('%filename%_%03d') String segmentFilenameTemplate,
