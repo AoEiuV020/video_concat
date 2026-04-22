@@ -12,5 +12,6 @@ abstract class GenerateResult with _$GenerateResult {
     required GenerateState state,
     required String output,
     String? errorMessage,
+    Duration? elapsedDuration,
   }) = _GenerateResult;
 }

@@ -224,6 +224,8 @@ class HomeViewModel extends _$HomeViewModel {
     final preInputArgs = state.exportOptions.toPreInputArgs();
     logger.d('extraArgs=$extraArgs preInputArgs=$preInputArgs');
 
+    final startTime = DateTime.now();
+
     try {
       // 构建章节信息（需要 ffprobe 获取每个视频时长）
       List<ChapterInfo>? chapters;
@@ -270,7 +272,8 @@ class HomeViewModel extends _$HomeViewModel {
           ? GenerateState.cancelled
           : (exitCode == 0 ? GenerateState.success : GenerateState.failed);
 
-      logger.i('生成完成 resultState=$resultState exitCode=$exitCode');
+      final elapsedDuration = DateTime.now().difference(startTime);
+      logger.i('生成完成 resultState=$resultState exitCode=$exitCode 耗时=$elapsedDuration');
 
       state = state.copyWith(
         isGenerating: false,
@@ -294,10 +297,12 @@ class HomeViewModel extends _$HomeViewModel {
           errorMessage: resultState == GenerateState.failed
               ? 'FFmpeg 退出码: $exitCode'
               : null,
+          elapsedDuration: elapsedDuration,
         ),
       );
     } catch (e, s) {
-      logger.e('startGenerate 异常', error: e, stackTrace: s);
+      final elapsedDuration = DateTime.now().difference(startTime);
+      logger.e('startGenerate 异常 耗时=$elapsedDuration', error: e, stackTrace: s);
       state = state.copyWith(
         isGenerating: false,
         lastGeneratedVideo: null,
@@ -306,6 +311,7 @@ class HomeViewModel extends _$HomeViewModel {
           state: GenerateState.failed,
           output: buffer.toString(),
           errorMessage: e.toString(),
+          elapsedDuration: elapsedDuration,
         ),
       );
     }

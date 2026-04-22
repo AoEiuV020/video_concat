@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$GenerateResult {
 
- GenerateState get state; String get output; String? get errorMessage;
+ GenerateState get state; String get output; String? get errorMessage; Duration? get elapsedDuration;
 /// Create a copy of GenerateResult
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $GenerateResultCopyWith<GenerateResult> get copyWith => _$GenerateResultCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is GenerateResult&&(identical(other.state, state) || other.state == state)&&(identical(other.output, output) || other.output == output)&&(identical(other.errorMessage, errorMessage) || other.errorMessage == errorMessage));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is GenerateResult&&(identical(other.state, state) || other.state == state)&&(identical(other.output, output) || other.output == output)&&(identical(other.errorMessage, errorMessage) || other.errorMessage == errorMessage)&&(identical(other.elapsedDuration, elapsedDuration) || other.elapsedDuration == elapsedDuration));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,state,output,errorMessage);
+int get hashCode => Object.hash(runtimeType,state,output,errorMessage,elapsedDuration);
 
 @override
 String toString() {
-  return 'GenerateResult(state: $state, output: $output, errorMessage: $errorMessage)';
+  return 'GenerateResult(state: $state, output: $output, errorMessage: $errorMessage, elapsedDuration: $elapsedDuration)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $GenerateResultCopyWith<$Res>  {
   factory $GenerateResultCopyWith(GenerateResult value, $Res Function(GenerateResult) _then) = _$GenerateResultCopyWithImpl;
 @useResult
 $Res call({
- GenerateState state, String output, String? errorMessage
+ GenerateState state, String output, String? errorMessage, Duration? elapsedDuration
 });
 
 
@@ -62,12 +62,13 @@ class _$GenerateResultCopyWithImpl<$Res>
 
 /// Create a copy of GenerateResult
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? state = null,Object? output = null,Object? errorMessage = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? state = null,Object? output = null,Object? errorMessage = freezed,Object? elapsedDuration = freezed,}) {
   return _then(_self.copyWith(
 state: null == state ? _self.state : state // ignore: cast_nullable_to_non_nullable
 as GenerateState,output: null == output ? _self.output : output // ignore: cast_nullable_to_non_nullable
 as String,errorMessage: freezed == errorMessage ? _self.errorMessage : errorMessage // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,elapsedDuration: freezed == elapsedDuration ? _self.elapsedDuration : elapsedDuration // ignore: cast_nullable_to_non_nullable
+as Duration?,
   ));
 }
 
@@ -152,10 +153,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( GenerateState state,  String output,  String? errorMessage)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( GenerateState state,  String output,  String? errorMessage,  Duration? elapsedDuration)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _GenerateResult() when $default != null:
-return $default(_that.state,_that.output,_that.errorMessage);case _:
+return $default(_that.state,_that.output,_that.errorMessage,_that.elapsedDuration);case _:
   return orElse();
 
 }
@@ -173,10 +174,10 @@ return $default(_that.state,_that.output,_that.errorMessage);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( GenerateState state,  String output,  String? errorMessage)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( GenerateState state,  String output,  String? errorMessage,  Duration? elapsedDuration)  $default,) {final _that = this;
 switch (_that) {
 case _GenerateResult():
-return $default(_that.state,_that.output,_that.errorMessage);case _:
+return $default(_that.state,_that.output,_that.errorMessage,_that.elapsedDuration);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -193,10 +194,10 @@ return $default(_that.state,_that.output,_that.errorMessage);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( GenerateState state,  String output,  String? errorMessage)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( GenerateState state,  String output,  String? errorMessage,  Duration? elapsedDuration)?  $default,) {final _that = this;
 switch (_that) {
 case _GenerateResult() when $default != null:
-return $default(_that.state,_that.output,_that.errorMessage);case _:
+return $default(_that.state,_that.output,_that.errorMessage,_that.elapsedDuration);case _:
   return null;
 
 }
@@ -208,12 +209,13 @@ return $default(_that.state,_that.output,_that.errorMessage);case _:
 
 
 class _GenerateResult implements GenerateResult {
-  const _GenerateResult({required this.state, required this.output, this.errorMessage});
+  const _GenerateResult({required this.state, required this.output, this.errorMessage, this.elapsedDuration});
   
 
 @override final  GenerateState state;
 @override final  String output;
 @override final  String? errorMessage;
+@override final  Duration? elapsedDuration;
 
 /// Create a copy of GenerateResult
 /// with the given fields replaced by the non-null parameter values.
@@ -225,16 +227,16 @@ _$GenerateResultCopyWith<_GenerateResult> get copyWith => __$GenerateResultCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _GenerateResult&&(identical(other.state, state) || other.state == state)&&(identical(other.output, output) || other.output == output)&&(identical(other.errorMessage, errorMessage) || other.errorMessage == errorMessage));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _GenerateResult&&(identical(other.state, state) || other.state == state)&&(identical(other.output, output) || other.output == output)&&(identical(other.errorMessage, errorMessage) || other.errorMessage == errorMessage)&&(identical(other.elapsedDuration, elapsedDuration) || other.elapsedDuration == elapsedDuration));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,state,output,errorMessage);
+int get hashCode => Object.hash(runtimeType,state,output,errorMessage,elapsedDuration);
 
 @override
 String toString() {
-  return 'GenerateResult(state: $state, output: $output, errorMessage: $errorMessage)';
+  return 'GenerateResult(state: $state, output: $output, errorMessage: $errorMessage, elapsedDuration: $elapsedDuration)';
 }
 
 
@@ -245,7 +247,7 @@ abstract mixin class _$GenerateResultCopyWith<$Res> implements $GenerateResultCo
   factory _$GenerateResultCopyWith(_GenerateResult value, $Res Function(_GenerateResult) _then) = __$GenerateResultCopyWithImpl;
 @override @useResult
 $Res call({
- GenerateState state, String output, String? errorMessage
+ GenerateState state, String output, String? errorMessage, Duration? elapsedDuration
 });
 
 
@@ -262,12 +264,13 @@ class __$GenerateResultCopyWithImpl<$Res>
 
 /// Create a copy of GenerateResult
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? state = null,Object? output = null,Object? errorMessage = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? state = null,Object? output = null,Object? errorMessage = freezed,Object? elapsedDuration = freezed,}) {
   return _then(_GenerateResult(
 state: null == state ? _self.state : state // ignore: cast_nullable_to_non_nullable
 as GenerateState,output: null == output ? _self.output : output // ignore: cast_nullable_to_non_nullable
 as String,errorMessage: freezed == errorMessage ? _self.errorMessage : errorMessage // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,elapsedDuration: freezed == elapsedDuration ? _self.elapsedDuration : elapsedDuration // ignore: cast_nullable_to_non_nullable
+as Duration?,
   ));
 }
 

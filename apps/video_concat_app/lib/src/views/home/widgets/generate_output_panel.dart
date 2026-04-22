@@ -1,9 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../../models/models.dart';
 
 /// 生成输出面板
-class GenerateOutputPanel extends StatelessWidget {
+class GenerateOutputPanel extends StatefulWidget {
   final GenerateResult result;
   final GeneratedVideoInfo? generatedVideo;
   final SegmentedOutputSummary? segmentedOutputSummary;
@@ -18,13 +20,72 @@ class GenerateOutputPanel extends StatelessWidget {
   });
 
   @override
+  State<GenerateOutputPanel> createState() => _GenerateOutputPanelState();
+}
+
+class _GenerateOutputPanelState extends State<GenerateOutputPanel> {
+  late DateTime _startTime;
+  Timer? _timer;
+  Duration _elapsedTime = Duration.zero;
+
+  @override
+  void initState() {
+    super.initState();
+    _startTime = DateTime.now();
+    _startTimer();
+  }
+
+  @override
+  void didUpdateWidget(GenerateOutputPanel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.result.state != oldWidget.result.state) {
+      if (widget.result.state == GenerateState.running) {
+        _startTime = DateTime.now();
+        _startTimer();
+      } else {
+        _stopTimer();
+        if (widget.result.elapsedDuration != null) {
+          _elapsedTime = widget.result.elapsedDuration!;
+        }
+      }
+    }
+  }
+
+  void _startTimer() {
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(milliseconds: 100), (_) {
+      setState(() {
+        _elapsedTime = DateTime.now().difference(_startTime);
+      });
+    });
+  }
+
+  void _stopTimer() {
+    _timer?.cancel();
+    _timer = null;
+  }
+
+  @override
+  void dispose() {
+    _stopTimer();
+    super.dispose();
+  }
+
+  String _formatDuration(Duration duration) {
+    final hours = duration.inHours;
+    final minutes = duration.inMinutes.remainder(60);
+    final seconds = duration.inSeconds.remainder(60);
+    return '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+  }
+
+  @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
     Color backgroundColor;
     IconData icon;
 
-    switch (result.state) {
+    switch (widget.result.state) {
       case GenerateState.running:
         backgroundColor = colorScheme.primaryContainer;
         icon = Icons.hourglass_empty;
@@ -62,23 +123,39 @@ class GenerateOutputPanel extends StatelessWidget {
               children: [
                 Icon(icon, size: 20),
                 const SizedBox(width: 8),
-                Text(
-                  _getTitle(),
-                  style: Theme.of(context).textTheme.titleSmall,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _getTitle(),
+                        style: Theme.of(context).textTheme.titleSmall,
+                      ),
+                      if (widget.result.state == GenerateState.running ||
+                          widget.result.elapsedDuration != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Text(
+                            '耗时：${_formatDuration(_elapsedTime)}',
+                            style: Theme.of(context).textTheme.labelSmall,
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
               ],
             ),
           ),
-          if (result.errorMessage != null)
+          if (widget.result.errorMessage != null)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12),
               child: Text(
-                result.errorMessage!,
+                widget.result.errorMessage!,
                 style: TextStyle(color: colorScheme.error),
               ),
             ),
-          if (result.state == GenerateState.success &&
-              segmentedOutputSummary != null)
+          if (widget.result.state == GenerateState.success &&
+              widget.segmentedOutputSummary != null)
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
               child: DecoratedBox(
@@ -96,17 +173,17 @@ class GenerateOutputPanel extends StatelessWidget {
                         style: Theme.of(context).textTheme.labelMedium,
                       ),
                       const SizedBox(height: 4),
-                      Text(segmentedOutputSummary!.directoryPath),
+                      Text(widget.segmentedOutputSummary!.directoryPath),
                       const SizedBox(height: 2),
-                      Text(segmentedOutputSummary!.fileNamePattern),
+                      Text(widget.segmentedOutputSummary!.fileNamePattern),
                     ],
                   ),
                 ),
               ),
             ),
-          if (result.state == GenerateState.success &&
-              segmentedOutputSummary == null &&
-              generatedVideo != null)
+          if (widget.result.state == GenerateState.success &&
+              widget.segmentedOutputSummary == null &&
+              widget.generatedVideo != null)
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
               child: DecoratedBox(
@@ -127,12 +204,12 @@ class GenerateOutputPanel extends StatelessWidget {
                               style: Theme.of(context).textTheme.labelMedium,
                             ),
                             const SizedBox(height: 4),
-                            Text(generatedVideo!.fileName),
+                            Text(widget.generatedVideo!.fileName),
                           ],
                         ),
                       ),
                       TextButton.icon(
-                        onPressed: onOpenVideoInfo,
+                        onPressed: widget.onOpenVideoInfo,
                         icon: const Icon(Icons.info_outline),
                         label: const Text('查看信息'),
                       ),
@@ -153,7 +230,7 @@ class GenerateOutputPanel extends StatelessWidget {
             child: SingleChildScrollView(
               reverse: true,
               child: Text(
-                result.output,
+                widget.result.output,
                 style: const TextStyle(
                   fontFamily: 'monospace',
                   fontSize: 12,
@@ -168,7 +245,7 @@ class GenerateOutputPanel extends StatelessWidget {
   }
 
   String _getTitle() {
-    switch (result.state) {
+    switch (widget.result.state) {
       case GenerateState.running:
         return '正在合并...';
       case GenerateState.success:
