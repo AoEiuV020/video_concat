@@ -39,6 +39,9 @@ abstract class ExportOptions with _$ExportOptions {
     /// 分段文件名模板
     @Default('%filename%_%03d') String segmentFilenameTemplate,
 
+    /// 是否使用 Trim 片段拆分
+    @Default(false) bool enableCustomSplit,
+
     /// 记住所有导出选择
     @Default(false) bool rememberChoices,
   }) = _ExportOptions;

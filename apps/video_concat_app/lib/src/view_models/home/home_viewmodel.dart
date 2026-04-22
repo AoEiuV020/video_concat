@@ -131,7 +131,10 @@ class HomeViewModel extends _$HomeViewModel {
 
   /// 更新导出选项
   ///
-  /// 自动处理互斥：清除元数据与拼接点章节不能同时启用。
+  /// 自动处理互斥：
+  /// - 清除元数据与拼接点章节不能同时启用
+  /// - 片段拆分与时长分段不能同时启用
+  /// - 按裁剪分段与拼接点章节不能同时启用
   void updateExportOptions(ExportOptions options) {
     final prev = state.exportOptions;
     var resolved = options;
@@ -142,6 +145,24 @@ class HomeViewModel extends _$HomeViewModel {
         resolved = resolved.copyWith(addChapters: false);
       } else if (!prev.addChapters && options.addChapters) {
         resolved = resolved.copyWith(stripMetadata: false);
+      }
+    }
+
+    // 片段拆分与时长分段互斥
+    if (options.enableCustomSplit && options.enableSegmentOutput) {
+      if (!prev.enableCustomSplit && options.enableCustomSplit) {
+        resolved = resolved.copyWith(enableSegmentOutput: false);
+      } else if (!prev.enableSegmentOutput && options.enableSegmentOutput) {
+        resolved = resolved.copyWith(enableCustomSplit: false);
+      }
+    }
+
+    // 按裁剪分段与拼接点章节互斥
+    if (options.enableCustomSplit && options.addChapters) {
+      if (!prev.enableCustomSplit && options.enableCustomSplit) {
+        resolved = resolved.copyWith(addChapters: false);
+      } else if (!prev.addChapters && options.addChapters) {
+        resolved = resolved.copyWith(enableCustomSplit: false);
       }
     }
 
@@ -256,6 +277,7 @@ class HomeViewModel extends _$HomeViewModel {
         extraArguments: extraArgs,
         segmentOutput: segmentOutput,
         chapters: chapters,
+        useCustomSegments: state.exportOptions.enableCustomSplit,
         onOutput: (output) {
           buffer.write(output);
           state = state.copyWith(
@@ -337,6 +359,11 @@ class HomeViewModel extends _$HomeViewModel {
   }
 
   SegmentOutputOptions? _buildSegmentOutputOptions(String outputPath) {
+    // 启用自定义片段拆分时，不使用分段输出选项
+    if (state.exportOptions.enableCustomSplit) {
+      return null;
+    }
+    
     if (!state.exportOptions.enableSegmentOutput) {
       return null;
     }

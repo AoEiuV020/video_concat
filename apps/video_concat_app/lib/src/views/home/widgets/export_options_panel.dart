@@ -122,6 +122,13 @@ class ExportOptionsPanel extends StatelessWidget {
         ),
       ),
       _CheckboxItem(
+        label: '按裁剪分段',
+        value: options.enableCustomSplit,
+        onChanged: (v) => vm.updateExportOptions(
+          options.copyWith(enableCustomSplit: v ?? false),
+        ),
+      ),
+      _CheckboxItem(
         label: '自动打开信息页',
         value: options.autoOpenVideoInfo,
         onChanged: (v) => vm.updateExportOptions(
@@ -140,6 +147,7 @@ class ExportOptionsPanel extends StatelessWidget {
         if (options.enableSegmentOutput) ...[
           const SizedBox(height: 8),
           _buildSegmentTextField(
+            key: const ValueKey('segment-duration'),
             label: '分段时长',
             initialValue: options.segmentDurationText,
             onChanged: (value) => vm.updateExportOptions(
@@ -148,6 +156,7 @@ class ExportOptionsPanel extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           _buildSegmentTextField(
+            key: const ValueKey('segment-template-by-duration'),
             label: '文件名模板',
             initialValue: options.segmentFilenameTemplate,
             onChanged: (value) => vm.updateExportOptions(
@@ -160,16 +169,34 @@ class ExportOptionsPanel extends StatelessWidget {
             style: Theme.of(context).textTheme.bodySmall,
           ),
         ],
+        if (options.enableCustomSplit) ...[
+          const SizedBox(height: 8),
+          _buildSegmentTextField(
+            key: const ValueKey('segment-template-by-trim'),
+            label: '文件名模板',
+            initialValue: options.segmentFilenameTemplate,
+            onChanged: (value) => vm.updateExportOptions(
+              options.copyWith(segmentFilenameTemplate: value),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Trim 片段将分别生成视频文件。',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+        ],
       ],
     );
   }
 
   Widget _buildSegmentTextField({
+    Key? key,
     required String label,
     required String initialValue,
     required ValueChanged<String> onChanged,
   }) {
     return SizedBox(
+      key: key,
       width: 280,
       child: TextFormField(
         initialValue: initialValue,
@@ -196,11 +223,14 @@ class ExportOptionsPanel extends StatelessWidget {
             value: item.value,
             onChanged: enabled ? item.onChanged : null,
           ),
-          GestureDetector(
-            onTap: enabled ? () => item.onChanged(!item.value) : null,
-            child: Text(
-              item.label,
-              style: TextStyle(color: enabled ? null : Colors.grey),
+          Expanded(
+            child: GestureDetector(
+              onTap: enabled ? () => item.onChanged(!item.value) : null,
+              child: Text(
+                item.label,
+                style: TextStyle(color: enabled ? null : Colors.grey),
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
           ),
         ],
@@ -256,8 +286,8 @@ class _CheckboxItem {
   const _CheckboxItem({
     required this.label,
     required this.value,
+    required this.onChanged,
     this.enabled = true,
     this.tooltip,
-    required this.onChanged,
   });
 }

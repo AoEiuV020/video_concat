@@ -256,6 +256,7 @@ final class _FakeVideoConcatService extends VideoConcatService {
     List<String> extraArguments = const [],
     SegmentOutputOptions? segmentOutput,
     List<ChapterInfo>? chapters,
+    bool useCustomSegments = false,
     OutputCallback? onOutput,
   }) async {
     concatCallCount++;
