@@ -1,7 +1,7 @@
 name: video_concat_app
 description: 视频合并工具
 publish_to: 'none'
-version: 2.0.0+6
+version: 2.1.0+7
 
 environment:
   sdk: ^3.10.7
