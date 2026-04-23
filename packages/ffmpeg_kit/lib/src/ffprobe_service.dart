@@ -10,6 +10,43 @@ import 'utils/timestamp.dart';
 class FFprobeService {
   String ffprobePath = 'ffprobe';
 
+  static final _versionRegex = RegExp(r'ffprobe version\s+([^\s]+)');
+
+  /// 验证 FFprobe 是否可用。
+  Future<bool> validate() async {
+    try {
+      final result = await Process.run(ffprobePath, ['-version']);
+      logger.d('validate path=$ffprobePath exitCode=${result.exitCode}');
+      return result.exitCode == 0;
+    } catch (e, s) {
+      logger.e('validate 失败 path=$ffprobePath', error: e, stackTrace: s);
+      return false;
+    }
+  }
+
+  /// 获取 FFprobe 版本号，失败返回 null。
+  Future<String?> readVersion() async {
+    try {
+      final result = await Process.run(ffprobePath, ['-version']);
+      if (result.exitCode != 0) {
+        logger.w(
+          'readVersion 失败 path=$ffprobePath exitCode=${result.exitCode}',
+        );
+        return null;
+      }
+
+      final output = result.stdout.toString();
+      final lines = output.split('\n');
+      final firstLine = lines.isEmpty ? '' : lines.first.trim();
+      final match = _versionRegex.firstMatch(firstLine);
+      final version = match?.group(1) ?? firstLine;
+      return version.isEmpty ? null : version;
+    } catch (e, s) {
+      logger.e('readVersion 异常 path=$ffprobePath', error: e, stackTrace: s);
+      return null;
+    }
+  }
+
   /// 从 ffmpeg 路径推导 ffprobe 路径。
   ///
   /// 将路径中最后的 "ffmpeg" 替换为 "ffprobe"。

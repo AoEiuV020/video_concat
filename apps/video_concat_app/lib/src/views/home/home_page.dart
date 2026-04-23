@@ -7,6 +7,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../log.dart';
 import '../../models/generate_result.dart';
 import '../../view_models/home/home_state.dart';
 import '../../view_models/home/home_viewmodel.dart';
@@ -73,6 +74,44 @@ class _HomePageState extends ConsumerState<HomePage> {
         context.push(_buildVideoInfoUri(outputPath));
       },
     );
+    ref.listen(
+      homeViewModelProvider.select(
+        (s) => (s.isCheckingTools, s.areToolsReady, s.toolCheckMessage),
+      ),
+      (previous, next) {
+        final (isCheckingTools, areToolsReady, toolCheckMessage) = next;
+        if (isCheckingTools || areToolsReady) {
+          return;
+        }
+
+        if ((previous?.$2 ?? true) == areToolsReady) {
+          return;
+        }
+
+        if (toolCheckMessage != null && mounted) {
+          ScaffoldMessenger.of(context)
+            ..clearSnackBars()
+            ..showSnackBar(SnackBar(content: Text(toolCheckMessage)));
+        }
+
+        try {
+          context.push('/settings');
+        } catch (e, s) {
+          logger.e('跳转设置页失败', error: e, stackTrace: s);
+        }
+      },
+    );
+    ref.listen(homeViewModelProvider.select((s) => s.errorMessage), (
+      previous,
+      next,
+    ) {
+      if (next == null || next.isEmpty || next == previous || !mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context)
+        ..clearSnackBars()
+        ..showSnackBar(SnackBar(content: Text(next)));
+    });
 
     return Scaffold(
       appBar: AppBar(

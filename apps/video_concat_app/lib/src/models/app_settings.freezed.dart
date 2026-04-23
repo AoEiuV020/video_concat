@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$AppSettings {
 
- String get ffmpegPath;
+ String get ffmpegPath; String get ffprobePath;
 /// Create a copy of AppSettings
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $AppSettingsCopyWith<AppSettings> get copyWith => _$AppSettingsCopyWithImpl<AppS
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AppSettings&&(identical(other.ffmpegPath, ffmpegPath) || other.ffmpegPath == ffmpegPath));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AppSettings&&(identical(other.ffmpegPath, ffmpegPath) || other.ffmpegPath == ffmpegPath)&&(identical(other.ffprobePath, ffprobePath) || other.ffprobePath == ffprobePath));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,ffmpegPath);
+int get hashCode => Object.hash(runtimeType,ffmpegPath,ffprobePath);
 
 @override
 String toString() {
-  return 'AppSettings(ffmpegPath: $ffmpegPath)';
+  return 'AppSettings(ffmpegPath: $ffmpegPath, ffprobePath: $ffprobePath)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $AppSettingsCopyWith<$Res>  {
   factory $AppSettingsCopyWith(AppSettings value, $Res Function(AppSettings) _then) = _$AppSettingsCopyWithImpl;
 @useResult
 $Res call({
- String ffmpegPath
+ String ffmpegPath, String ffprobePath
 });
 
 
@@ -62,9 +62,10 @@ class _$AppSettingsCopyWithImpl<$Res>
 
 /// Create a copy of AppSettings
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? ffmpegPath = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? ffmpegPath = null,Object? ffprobePath = null,}) {
   return _then(_self.copyWith(
 ffmpegPath: null == ffmpegPath ? _self.ffmpegPath : ffmpegPath // ignore: cast_nullable_to_non_nullable
+as String,ffprobePath: null == ffprobePath ? _self.ffprobePath : ffprobePath // ignore: cast_nullable_to_non_nullable
 as String,
   ));
 }
@@ -150,10 +151,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String ffmpegPath)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String ffmpegPath,  String ffprobePath)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _AppSettings() when $default != null:
-return $default(_that.ffmpegPath);case _:
+return $default(_that.ffmpegPath,_that.ffprobePath);case _:
   return orElse();
 
 }
@@ -171,10 +172,10 @@ return $default(_that.ffmpegPath);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String ffmpegPath)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String ffmpegPath,  String ffprobePath)  $default,) {final _that = this;
 switch (_that) {
 case _AppSettings():
-return $default(_that.ffmpegPath);case _:
+return $default(_that.ffmpegPath,_that.ffprobePath);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -191,10 +192,10 @@ return $default(_that.ffmpegPath);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String ffmpegPath)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String ffmpegPath,  String ffprobePath)?  $default,) {final _that = this;
 switch (_that) {
 case _AppSettings() when $default != null:
-return $default(_that.ffmpegPath);case _:
+return $default(_that.ffmpegPath,_that.ffprobePath);case _:
   return null;
 
 }
@@ -206,10 +207,11 @@ return $default(_that.ffmpegPath);case _:
 
 
 class _AppSettings implements AppSettings {
-  const _AppSettings({required this.ffmpegPath});
+  const _AppSettings({required this.ffmpegPath, required this.ffprobePath});
   
 
 @override final  String ffmpegPath;
+@override final  String ffprobePath;
 
 /// Create a copy of AppSettings
 /// with the given fields replaced by the non-null parameter values.
@@ -221,16 +223,16 @@ _$AppSettingsCopyWith<_AppSettings> get copyWith => __$AppSettingsCopyWithImpl<_
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AppSettings&&(identical(other.ffmpegPath, ffmpegPath) || other.ffmpegPath == ffmpegPath));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AppSettings&&(identical(other.ffmpegPath, ffmpegPath) || other.ffmpegPath == ffmpegPath)&&(identical(other.ffprobePath, ffprobePath) || other.ffprobePath == ffprobePath));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,ffmpegPath);
+int get hashCode => Object.hash(runtimeType,ffmpegPath,ffprobePath);
 
 @override
 String toString() {
-  return 'AppSettings(ffmpegPath: $ffmpegPath)';
+  return 'AppSettings(ffmpegPath: $ffmpegPath, ffprobePath: $ffprobePath)';
 }
 
 
@@ -241,7 +243,7 @@ abstract mixin class _$AppSettingsCopyWith<$Res> implements $AppSettingsCopyWith
   factory _$AppSettingsCopyWith(_AppSettings value, $Res Function(_AppSettings) _then) = __$AppSettingsCopyWithImpl;
 @override @useResult
 $Res call({
- String ffmpegPath
+ String ffmpegPath, String ffprobePath
 });
 
 
@@ -258,9 +260,10 @@ class __$AppSettingsCopyWithImpl<$Res>
 
 /// Create a copy of AppSettings
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? ffmpegPath = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? ffmpegPath = null,Object? ffprobePath = null,}) {
   return _then(_AppSettings(
 ffmpegPath: null == ffmpegPath ? _self.ffmpegPath : ffmpegPath // ignore: cast_nullable_to_non_nullable
+as String,ffprobePath: null == ffprobePath ? _self.ffprobePath : ffprobePath // ignore: cast_nullable_to_non_nullable
 as String,
   ));
 }

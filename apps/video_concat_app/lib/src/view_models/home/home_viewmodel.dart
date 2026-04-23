@@ -6,6 +6,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../log.dart';
 import '../../models/models.dart';
 import '../../utils/chapter_builder.dart';
+import '../../utils/external_tools.dart';
 import '../../utils/segment_output_parser.dart';
 import '../providers.dart';
 import 'home_state.dart';
@@ -20,8 +21,21 @@ class HomeViewModel extends _$HomeViewModel {
 
   @override
   HomeState build() {
-    _loadPreferences();
+    _initialize();
     return const HomeState();
+  }
+
+  Future<void> _initialize() async {
+    try {
+      await _loadPreferences();
+      if (!ref.mounted) return;
+      await _setupExternalTools();
+      if (!ref.mounted) return;
+      await _validateExternalTools();
+    } catch (e, s) {
+      if (!ref.mounted) return;
+      _reportError('初始化失败', e, s, userMessage: '初始化失败：$e');
+    }
   }
 
   Future<void> _loadPreferences() async {
@@ -37,14 +51,134 @@ class HomeViewModel extends _$HomeViewModel {
       logger.d('偏好加载完成 ext=$ext exportOptions=$exportOptions');
     } catch (e, s) {
       if (!ref.mounted) return;
-      logger.e('偏好加载失败', error: e, stackTrace: s);
+      _reportError('偏好加载失败', e, s, userMessage: '读取偏好失败：$e');
     }
+  }
+
+  Future<void> _setupExternalTools() async {
+    if (!ref.mounted) return;
+    final prefs = ref.read(preferencesRepositoryProvider);
+    final ffmpeg = ref.read(ffmpegServiceProvider);
+    final ffprobe = ref.read(ffprobeServiceProvider);
+    final specs = externalToolSpecsForCurrentPlatform();
+
+    String ffmpegPath = await prefs.getFFmpegPath() ?? '';
+    if (!ref.mounted) return;
+    String ffprobePath = await prefs.getFFprobePath() ?? '';
+    if (!ref.mounted) return;
+
+    ffmpegPath = await _resolveToolPath(
+      tool: ExternalTool.ffmpeg,
+      currentPath: ffmpegPath,
+      fallbackCommand: specs[ExternalTool.ffmpeg]!.commandName,
+      onPersist: prefs.saveFFmpegPath,
+      validateCandidate: (candidate) async {
+        final old = ffmpeg.ffmpegPath;
+        ffmpeg.ffmpegPath = candidate;
+        final ok = await ffmpeg.validate();
+        ffmpeg.ffmpegPath = old;
+        return ok;
+      },
+    );
+    if (!ref.mounted) return;
+
+    ffprobePath = await _resolveToolPath(
+      tool: ExternalTool.ffprobe,
+      currentPath: ffprobePath,
+      fallbackCommand: specs[ExternalTool.ffprobe]!.commandName,
+      onPersist: prefs.saveFFprobePath,
+      validateCandidate: (candidate) async {
+        final old = ffprobe.ffprobePath;
+        ffprobe.ffprobePath = candidate;
+        final ok = await ffprobe.validate();
+        ffprobe.ffprobePath = old;
+        return ok;
+      },
+    );
+    if (!ref.mounted) return;
+
+    ffmpeg.ffmpegPath = ffmpegPath;
+    ffprobe.ffprobePath = ffprobePath;
+    logger.i('工具路径已设置 ffmpeg=$ffmpegPath ffprobe=$ffprobePath');
+  }
+
+  Future<String> _resolveToolPath({
+    required ExternalTool tool,
+    required String currentPath,
+    required String fallbackCommand,
+    required Future<void> Function(String) onPersist,
+    required Future<bool> Function(String) validateCandidate,
+  }) async {
+    final specs = externalToolSpecsForCurrentPlatform();
+    final spec = specs[tool]!;
+    final trimmed = currentPath.trim();
+
+    if (trimmed.isNotEmpty && await validateCandidate(trimmed)) {
+      return trimmed;
+    }
+
+    for (final candidate in spec.candidatePaths) {
+      try {
+        if (_isAbsolutePath(candidate) && !(await File(candidate).exists())) {
+          continue;
+        }
+        if (await validateCandidate(candidate)) {
+          await onPersist(candidate);
+          logger.i('自动发现 ${spec.displayName}=$candidate');
+          return candidate;
+        }
+      } catch (e, s) {
+        logger.w('探测 ${spec.displayName} 失败 candidate=$candidate error=$e');
+        logger.d('探测异常堆栈: $s');
+      }
+    }
+
+    return trimmed.isNotEmpty ? trimmed : fallbackCommand;
+  }
+
+  Future<void> _validateExternalTools() async {
+    if (!ref.mounted) return;
+    state = state.copyWith(isCheckingTools: true, toolCheckMessage: null);
+    try {
+      final ffmpeg = ref.read(ffmpegServiceProvider);
+      final ffprobe = ref.read(ffprobeServiceProvider);
+      final ffmpegOk = await ffmpeg.validate();
+      if (!ref.mounted) return;
+      final ffprobeOk = await ffprobe.validate();
+      if (!ref.mounted) return;
+      final ready = ffmpegOk && ffprobeOk;
+      final msg = ready ? null : 'FFmpeg 或 FFprobe 不可用，请到设置页修复路径';
+      state = state.copyWith(
+        isCheckingTools: false,
+        areToolsReady: ready,
+        toolCheckMessage: msg,
+      );
+    } catch (e, s) {
+      if (!ref.mounted) return;
+      _reportError('工具校验失败', e, s, userMessage: '工具校验失败：$e');
+      state = state.copyWith(
+        isCheckingTools: false,
+        areToolsReady: false,
+        toolCheckMessage: '工具校验失败，请前往设置页修复路径',
+      );
+    }
+  }
+
+  bool _isAbsolutePath(String path) {
+    return path.startsWith('/') || RegExp(r'^[A-Za-z]:[\\/]').hasMatch(path);
   }
 
   /// 添加视频文件
   Future<void> addVideos(List<String> filePaths) async {
     logger.d('addVideos ${filePaths.length} 个文件');
     try {
+      if (!state.areToolsReady) {
+        state = state.copyWith(
+          errorMessage: state.toolCheckMessage ?? '外部工具不可用',
+        );
+        return;
+      }
+
       final newItems = <VideoItem>[];
       for (final path in filePaths) {
         final file = File(path);
@@ -71,39 +205,54 @@ class HomeViewModel extends _$HomeViewModel {
 
       _checkAndProbe();
     } catch (e, s) {
-      logger.e('addVideos 失败', error: e, stackTrace: s);
+      _reportError('addVideos 失败', e, s, userMessage: '添加视频失败：$e');
     }
   }
 
   /// 删除视频
   void removeVideo(String id) {
-    logger.d('removeVideo id=$id');
-    final items = state.videoItems.where((v) => v.id != id).toList();
-    state = state.copyWith(
-      videoItems: items,
-      outputConfig: _updateBaseName(items, state.outputConfig),
-    );
-
-    _checkAndProbe();
+    try {
+      logger.d('removeVideo id=$id');
+      final items = state.videoItems.where((v) => v.id != id).toList();
+      state = state.copyWith(
+        videoItems: items,
+        outputConfig: _updateBaseName(items, state.outputConfig),
+      );
+      _checkAndProbe();
+    } catch (e, s) {
+      _reportError('removeVideo 失败', e, s, userMessage: '删除视频失败：$e');
+    }
   }
 
   /// 重新排序
   void reorderVideo(int oldIndex, int newIndex) {
-    logger.d('reorderVideo $oldIndex -> $newIndex');
-    final items = [...state.videoItems];
-    if (newIndex > oldIndex) newIndex--;
-    final item = items.removeAt(oldIndex);
-    items.insert(newIndex, item);
-    state = state.copyWith(videoItems: items);
-
-    _checkAndProbe();
+    try {
+      logger.d('reorderVideo $oldIndex -> $newIndex');
+      final items = [...state.videoItems];
+      if (newIndex > oldIndex) newIndex--;
+      final item = items.removeAt(oldIndex);
+      items.insert(newIndex, item);
+      state = state.copyWith(videoItems: items);
+      _checkAndProbe();
+    } catch (e, s) {
+      _reportError('reorderVideo 失败', e, s, userMessage: '排序失败：$e');
+    }
   }
 
   /// 更新输出文件名
   void updateOutputBaseName(String baseName) {
-    state = state.copyWith(
-      outputConfig: state.outputConfig.copyWith(baseName: baseName),
-    );
+    try {
+      state = state.copyWith(
+        outputConfig: state.outputConfig.copyWith(baseName: baseName),
+      );
+    } catch (e, s) {
+      _reportError(
+        'updateOutputBaseName 失败',
+        e,
+        s,
+        userMessage: '更新输出文件名失败：$e',
+      );
+    }
   }
 
   /// 更新输出后缀
@@ -125,7 +274,12 @@ class HomeViewModel extends _$HomeViewModel {
         );
       }
     } catch (e, s) {
-      logger.e('updateOutputExtension 失败', error: e, stackTrace: s);
+      _reportError(
+        'updateOutputExtension 失败',
+        e,
+        s,
+        userMessage: '更新输出后缀失败：$e',
+      );
     }
   }
 
@@ -136,37 +290,41 @@ class HomeViewModel extends _$HomeViewModel {
   /// - 片段拆分与时长分段不能同时启用
   /// - 按裁剪分段与拼接点章节不能同时启用
   void updateExportOptions(ExportOptions options) {
-    final prev = state.exportOptions;
-    var resolved = options;
+    try {
+      final prev = state.exportOptions;
+      var resolved = options;
 
-    // 清除元数据(-map_metadata -1)与章节注入(-map_metadata 1)互斥
-    if (options.stripMetadata && options.addChapters) {
-      if (!prev.stripMetadata && options.stripMetadata) {
-        resolved = resolved.copyWith(addChapters: false);
-      } else if (!prev.addChapters && options.addChapters) {
-        resolved = resolved.copyWith(stripMetadata: false);
+      // 清除元数据(-map_metadata -1)与章节注入(-map_metadata 1)互斥
+      if (options.stripMetadata && options.addChapters) {
+        if (!prev.stripMetadata && options.stripMetadata) {
+          resolved = resolved.copyWith(addChapters: false);
+        } else if (!prev.addChapters && options.addChapters) {
+          resolved = resolved.copyWith(stripMetadata: false);
+        }
       }
-    }
 
-    // 片段拆分与时长分段互斥
-    if (options.enableCustomSplit && options.enableSegmentOutput) {
-      if (!prev.enableCustomSplit && options.enableCustomSplit) {
-        resolved = resolved.copyWith(enableSegmentOutput: false);
-      } else if (!prev.enableSegmentOutput && options.enableSegmentOutput) {
-        resolved = resolved.copyWith(enableCustomSplit: false);
+      // 片段拆分与时长分段互斥
+      if (options.enableCustomSplit && options.enableSegmentOutput) {
+        if (!prev.enableCustomSplit && options.enableCustomSplit) {
+          resolved = resolved.copyWith(enableSegmentOutput: false);
+        } else if (!prev.enableSegmentOutput && options.enableSegmentOutput) {
+          resolved = resolved.copyWith(enableCustomSplit: false);
+        }
       }
-    }
 
-    // 按裁剪分段与拼接点章节互斥
-    if (options.enableCustomSplit && options.addChapters) {
-      if (!prev.enableCustomSplit && options.enableCustomSplit) {
-        resolved = resolved.copyWith(addChapters: false);
-      } else if (!prev.addChapters && options.addChapters) {
-        resolved = resolved.copyWith(enableCustomSplit: false);
+      // 按裁剪分段与拼接点章节互斥
+      if (options.enableCustomSplit && options.addChapters) {
+        if (!prev.enableCustomSplit && options.enableCustomSplit) {
+          resolved = resolved.copyWith(addChapters: false);
+        } else if (!prev.addChapters && options.addChapters) {
+          resolved = resolved.copyWith(enableCustomSplit: false);
+        }
       }
-    }
 
-    state = state.copyWith(exportOptions: resolved);
+      state = state.copyWith(exportOptions: resolved);
+    } catch (e, s) {
+      _reportError('updateExportOptions 失败', e, s, userMessage: '更新导出选项失败：$e');
+    }
   }
 
   OutputConfig _updateBaseName(List<VideoItem> items, OutputConfig config) {
@@ -197,6 +355,18 @@ class HomeViewModel extends _$HomeViewModel {
       'startGenerate outputPath=$outputPath '
       'videos=${state.videoItems.length}',
     );
+
+    if (!state.areToolsReady) {
+      state = state.copyWith(
+        isGenerating: false,
+        generateResult: const GenerateResult(
+          state: GenerateState.failed,
+          output: '',
+          errorMessage: '外部工具不可用，请先在设置页配置 FFmpeg/FFprobe',
+        ),
+      );
+      return;
+    }
 
     SegmentOutputOptions? segmentOutput;
     var extraArgs = state.exportOptions.toFFmpegArgs(
@@ -295,7 +465,9 @@ class HomeViewModel extends _$HomeViewModel {
           : (exitCode == 0 ? GenerateState.success : GenerateState.failed);
 
       final elapsedDuration = DateTime.now().difference(startTime);
-      logger.i('生成完成 resultState=$resultState exitCode=$exitCode 耗时=$elapsedDuration');
+      logger.i(
+        '生成完成 resultState=$resultState exitCode=$exitCode 耗时=$elapsedDuration',
+      );
 
       state = state.copyWith(
         isGenerating: false,
@@ -329,6 +501,7 @@ class HomeViewModel extends _$HomeViewModel {
         isGenerating: false,
         lastGeneratedVideo: null,
         segmentedOutputSummary: null,
+        errorMessage: '合并失败：$e',
         generateResult: GenerateResult(
           state: GenerateState.failed,
           output: buffer.toString(),
@@ -341,21 +514,29 @@ class HomeViewModel extends _$HomeViewModel {
 
   /// 中断生成
   void cancelGenerate() {
-    logger.i('cancelGenerate');
-    ref.read(videoConcatServiceProvider).cancel();
+    try {
+      logger.i('cancelGenerate');
+      ref.read(videoConcatServiceProvider).cancel();
+    } catch (e, s) {
+      _reportError('cancelGenerate 失败', e, s, userMessage: '中断失败：$e');
+    }
   }
 
   /// 清除生成结果
   void clearResult() {
-    state = state.copyWith(generateResult: null);
+    state = state.copyWith(generateResult: null, errorMessage: null);
   }
 
   /// 重置所有状态，开始新任务
   void reset() {
-    logger.d('reset');
-    _referenceFilePath = null;
-    state = const HomeState();
-    _loadPreferences();
+    try {
+      logger.d('reset');
+      _referenceFilePath = null;
+      state = const HomeState();
+      _initialize();
+    } catch (e, s) {
+      _reportError('reset 失败', e, s, userMessage: '重置失败：$e');
+    }
   }
 
   SegmentOutputOptions? _buildSegmentOutputOptions(String outputPath) {
@@ -363,7 +544,7 @@ class HomeViewModel extends _$HomeViewModel {
     if (state.exportOptions.enableCustomSplit) {
       return null;
     }
-    
+
     if (!state.exportOptions.enableSegmentOutput) {
       return null;
     }
@@ -438,7 +619,12 @@ class HomeViewModel extends _$HomeViewModel {
     try {
       refResult = await _getFfprobeService().probe(refPath);
     } catch (e, s) {
-      logger.e('探测参考视频失败 path=$refPath', error: e, stackTrace: s);
+      _reportError(
+        '探测参考视频失败 path=$refPath',
+        e,
+        s,
+        userMessage: '读取参考视频信息失败：$e',
+      );
       return;
     }
     if (_referenceFilePath != refPath) return;
@@ -489,7 +675,12 @@ class HomeViewModel extends _$HomeViewModel {
         'durationUs=$durationUs',
       );
     } catch (e, s) {
-      logger.e('探测失败 ${item.fileName}', error: e, stackTrace: s);
+      _reportError(
+        '探测失败 ${item.fileName}',
+        e,
+        s,
+        userMessage: '探测失败：${item.fileName}',
+      );
       compatible = false;
     }
 
@@ -513,7 +704,21 @@ class HomeViewModel extends _$HomeViewModel {
   FFprobeService _getFfprobeService() {
     final ffprobe = ref.read(ffprobeServiceProvider);
     final ffmpeg = ref.read(ffmpegServiceProvider);
-    ffprobe.deriveFromFFmpegPath(ffmpeg.ffmpegPath);
+    if (ffprobe.ffprobePath.trim().isEmpty ||
+        ffprobe.ffprobePath == 'ffprobe') {
+      ffprobe.deriveFromFFmpegPath(ffmpeg.ffmpegPath);
+    }
     return ffprobe;
+  }
+
+  void _reportError(
+    String action,
+    Object error,
+    StackTrace stackTrace, {
+    required String userMessage,
+  }) {
+    if (!ref.mounted) return;
+    logger.e(action, error: error, stackTrace: stackTrace);
+    state = state.copyWith(errorMessage: userMessage);
   }
 }

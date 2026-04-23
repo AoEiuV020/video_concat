@@ -13,15 +13,35 @@ import 'package:video_concat_app/src/view_models/providers.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  ProviderContainer createContainer(
+    List overrides, {
+    FFmpegService? ffmpegService,
+    FFprobeService? ffprobeService,
+  }) {
+    return ProviderContainer(
+      overrides: [
+        ffmpegServiceProvider.overrideWithValue(
+          ffmpegService ?? _ImmediateFFmpegService(),
+        ),
+        ffprobeServiceProvider.overrideWithValue(
+          ffprobeService ?? _ImmediateFFprobeService(),
+        ),
+        ...overrides,
+      ],
+    );
+  }
+
+  Future<void> waitInit() async {
+    await Future<void>.delayed(const Duration(milliseconds: 80));
+  }
+
   group('HomeViewModel', () {
     test('启用清除元数据时会关闭拼接点章节', () {
-      final container = ProviderContainer(
-        overrides: [
-          preferencesRepositoryProvider.overrideWithValue(
-            _FakePreferencesRepository(),
-          ),
-        ],
-      );
+      final container = createContainer([
+        preferencesRepositoryProvider.overrideWithValue(
+          _FakePreferencesRepository(),
+        ),
+      ]);
       addTearDown(container.dispose);
 
       final vm = container.read(homeViewModelProvider.notifier);
@@ -35,13 +55,11 @@ void main() {
     });
 
     test('启用拼接点章节时会关闭清除元数据', () {
-      final container = ProviderContainer(
-        overrides: [
-          preferencesRepositoryProvider.overrideWithValue(
-            _FakePreferencesRepository(),
-          ),
-        ],
-      );
+      final container = createContainer([
+        preferencesRepositoryProvider.overrideWithValue(
+          _FakePreferencesRepository(),
+        ),
+      ]);
       addTearDown(container.dispose);
 
       final vm = container.read(homeViewModelProvider.notifier);
@@ -57,17 +75,18 @@ void main() {
 
     test('分段时长非法时不会启动合并', () async {
       final fakeService = _FakeVideoConcatService(exitCode: 0);
-      final container = ProviderContainer(
-        overrides: [
-          preferencesRepositoryProvider.overrideWithValue(
-            _FakePreferencesRepository(),
-          ),
-          videoConcatServiceProvider.overrideWithValue(fakeService),
-        ],
-      );
+      final container = createContainer([
+        preferencesRepositoryProvider.overrideWithValue(
+          _FakePreferencesRepository(),
+        ),
+        videoConcatServiceProvider.overrideWithValue(fakeService),
+      ]);
       addTearDown(container.dispose);
+      final sub = container.listen(homeViewModelProvider, (_, _) {});
+      addTearDown(sub.close);
 
       final vm = container.read(homeViewModelProvider.notifier);
+      await waitInit();
       vm.updateExportOptions(
         const ExportOptions(
           enableSegmentOutput: true,
@@ -91,26 +110,25 @@ void main() {
       final fileA = File('${tempDir.path}/a.mp4')..writeAsStringSync('a');
       final fileB = File('${tempDir.path}/b.mp4')..writeAsStringSync('b');
 
-      final container = ProviderContainer(
-        overrides: [
+      final container = createContainer(
+        [
           preferencesRepositoryProvider.overrideWithValue(
             _FakePreferencesRepository(),
           ),
-          ffprobeServiceProvider.overrideWithValue(
-            _FakeFFprobeService(
-              byPath: {
-                fileA.path: _probeResult(duration: 10, width: 1920),
-                fileB.path: _probeResult(duration: 8, width: 1280),
-              },
-            ),
-          ),
         ],
+        ffprobeService: _FakeFFprobeService(
+          byPath: {
+            fileA.path: _probeResult(duration: 10, width: 1920),
+            fileB.path: _probeResult(duration: 8, width: 1280),
+          },
+        ),
       );
       addTearDown(container.dispose);
 
       final subscription = container.listen(homeViewModelProvider, (_, _) {});
       addTearDown(subscription.close);
       final vm = container.read(homeViewModelProvider.notifier);
+      await waitInit();
       await vm.addVideos([fileA.path, fileB.path]);
       await Future<void>.delayed(const Duration(milliseconds: 20));
 
@@ -122,19 +140,20 @@ void main() {
     });
 
     test('合并成功后会记录最近一次成功产物', () async {
-      final container = ProviderContainer(
-        overrides: [
-          preferencesRepositoryProvider.overrideWithValue(
-            _FakePreferencesRepository(),
-          ),
-          videoConcatServiceProvider.overrideWithValue(
-            _FakeVideoConcatService(exitCode: 0),
-          ),
-        ],
-      );
+      final container = createContainer([
+        preferencesRepositoryProvider.overrideWithValue(
+          _FakePreferencesRepository(),
+        ),
+        videoConcatServiceProvider.overrideWithValue(
+          _FakeVideoConcatService(exitCode: 0),
+        ),
+      ]);
       addTearDown(container.dispose);
+      final sub = container.listen(homeViewModelProvider, (_, _) {});
+      addTearDown(sub.close);
 
       final vm = container.read(homeViewModelProvider.notifier);
+      await waitInit();
       await vm.startGenerate('/tmp/output.mp4');
 
       final state = container.read(homeViewModelProvider);
@@ -144,17 +163,18 @@ void main() {
 
     test('分段成功后会记录多文件摘要并清空单文件产物', () async {
       final fakeService = _FakeVideoConcatService(exitCode: 0);
-      final container = ProviderContainer(
-        overrides: [
-          preferencesRepositoryProvider.overrideWithValue(
-            _FakePreferencesRepository(),
-          ),
-          videoConcatServiceProvider.overrideWithValue(fakeService),
-        ],
-      );
+      final container = createContainer([
+        preferencesRepositoryProvider.overrideWithValue(
+          _FakePreferencesRepository(),
+        ),
+        videoConcatServiceProvider.overrideWithValue(fakeService),
+      ]);
       addTearDown(container.dispose);
+      final sub = container.listen(homeViewModelProvider, (_, _) {});
+      addTearDown(sub.close);
 
       final vm = container.read(homeViewModelProvider.notifier);
+      await waitInit();
       vm.updateExportOptions(
         const ExportOptions(
           enableSegmentOutput: true,
@@ -177,19 +197,20 @@ void main() {
     });
 
     test('重置后会清空最近一次成功产物', () async {
-      final container = ProviderContainer(
-        overrides: [
-          preferencesRepositoryProvider.overrideWithValue(
-            _FakePreferencesRepository(),
-          ),
-          videoConcatServiceProvider.overrideWithValue(
-            _FakeVideoConcatService(exitCode: 0),
-          ),
-        ],
-      );
+      final container = createContainer([
+        preferencesRepositoryProvider.overrideWithValue(
+          _FakePreferencesRepository(),
+        ),
+        videoConcatServiceProvider.overrideWithValue(
+          _FakeVideoConcatService(exitCode: 0),
+        ),
+      ]);
       addTearDown(container.dispose);
+      final sub = container.listen(homeViewModelProvider, (_, _) {});
+      addTearDown(sub.close);
 
       final vm = container.read(homeViewModelProvider.notifier);
+      await waitInit();
       await vm.startGenerate('/tmp/output.mp4');
       vm.reset();
 
@@ -202,17 +223,15 @@ void main() {
 
       await runZoned(
         () async {
-          final container = ProviderContainer(
-            overrides: [
-              preferencesRepositoryProvider.overrideWithValue(
-                _DelayedPreferencesRepository(),
-              ),
-            ],
-          );
+          final container = createContainer([
+            preferencesRepositoryProvider.overrideWithValue(
+              _DelayedPreferencesRepository(),
+            ),
+          ]);
 
           container.read(homeViewModelProvider);
           container.dispose();
-          await Future<void>.delayed(const Duration(milliseconds: 20));
+          await Future<void>.delayed(const Duration(milliseconds: 120));
         },
         zoneSpecification: ZoneSpecification(
           print: (self, parent, zone, message) {
@@ -230,6 +249,8 @@ void main() {
 }
 
 final class _FakePreferencesRepository extends PreferencesRepository {
+  _FakePreferencesRepository();
+
   @override
   Future<String> getLastExtension() async => 'mp4';
 
@@ -238,6 +259,12 @@ final class _FakePreferencesRepository extends PreferencesRepository {
 
   @override
   Future<void> saveExportOptions(ExportOptions options) async {}
+
+  @override
+  Future<String?> getFFmpegPath() async => 'ffmpeg';
+
+  @override
+  Future<String?> getFFprobePath() async => 'ffprobe';
 }
 
 final class _FakeVideoConcatService extends VideoConcatService {
@@ -278,6 +305,12 @@ final class _DelayedPreferencesRepository extends PreferencesRepository {
     await Future<void>.delayed(const Duration(milliseconds: 1));
     return const ExportOptions();
   }
+
+  @override
+  Future<String?> getFFmpegPath() async => 'ffmpeg';
+
+  @override
+  Future<String?> getFFprobePath() async => 'ffprobe';
 }
 
 final class _FakeFFprobeService extends FFprobeService {
@@ -289,6 +322,9 @@ final class _FakeFFprobeService extends FFprobeService {
   void deriveFromFFmpegPath(String ffmpegPath) {}
 
   @override
+  Future<bool> validate() async => true;
+
+  @override
   Future<ProbeResult> probe(String filePath) async {
     final result = byPath[filePath];
     if (result == null) {
@@ -298,10 +334,17 @@ final class _FakeFFprobeService extends FFprobeService {
   }
 }
 
-ProbeResult _probeResult({
-  required double duration,
-  required int width,
-}) {
+final class _ImmediateFFmpegService extends FFmpegService {
+  @override
+  Future<bool> validate() async => true;
+}
+
+final class _ImmediateFFprobeService extends FFprobeService {
+  @override
+  Future<bool> validate() async => true;
+}
+
+ProbeResult _probeResult({required double duration, required int width}) {
   return ProbeResult(
     format: FormatInfo(
       filename: '/tmp/demo.mp4',

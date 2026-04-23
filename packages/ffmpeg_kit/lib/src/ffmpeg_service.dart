@@ -13,6 +13,8 @@ class FFmpegService {
   String ffmpegPath = 'ffmpeg';
   Process? _currentProcess;
 
+  static final _versionRegex = RegExp(r'ffmpeg version\s+([^\s]+)');
+
   /// 是否正在执行
   bool get isRunning => _currentProcess != null;
 
@@ -29,6 +31,27 @@ class FFmpegService {
     } catch (e, s) {
       logger.e('validate 失败 path=$ffmpegPath', error: e, stackTrace: s);
       return false;
+    }
+  }
+
+  /// 获取 FFmpeg 版本号，失败返回 null。
+  Future<String?> readVersion() async {
+    try {
+      final result = await Process.run(ffmpegPath, ['-version']);
+      if (result.exitCode != 0) {
+        logger.w('readVersion 失败 path=$ffmpegPath exitCode=${result.exitCode}');
+        return null;
+      }
+
+      final output = result.stdout.toString();
+      final lines = output.split('\n');
+      final firstLine = lines.isEmpty ? '' : lines.first.trim();
+      final match = _versionRegex.firstMatch(firstLine);
+      final version = match?.group(1) ?? firstLine;
+      return version.isEmpty ? null : version;
+    } catch (e, s) {
+      logger.e('readVersion 异常 path=$ffmpegPath', error: e, stackTrace: s);
+      return null;
     }
   }
 

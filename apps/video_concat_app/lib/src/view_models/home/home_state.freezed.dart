@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$HomeState {
 
- List<VideoItem> get videoItems; OutputConfig get outputConfig; ExportOptions get exportOptions; GenerateResult? get generateResult; GeneratedVideoInfo? get lastGeneratedVideo; SegmentedOutputSummary? get segmentedOutputSummary; bool get isGenerating; ProbeResult? get referenceResult; Map<String, bool> get videoCompatibility;
+ List<VideoItem> get videoItems; OutputConfig get outputConfig; ExportOptions get exportOptions; GenerateResult? get generateResult; GeneratedVideoInfo? get lastGeneratedVideo; SegmentedOutputSummary? get segmentedOutputSummary; bool get isGenerating; bool get isCheckingTools; bool get areToolsReady; String? get toolCheckMessage; String? get errorMessage; ProbeResult? get referenceResult; Map<String, bool> get videoCompatibility;
 /// Create a copy of HomeState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $HomeStateCopyWith<HomeState> get copyWith => _$HomeStateCopyWithImpl<HomeState>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is HomeState&&const DeepCollectionEquality().equals(other.videoItems, videoItems)&&(identical(other.outputConfig, outputConfig) || other.outputConfig == outputConfig)&&(identical(other.exportOptions, exportOptions) || other.exportOptions == exportOptions)&&(identical(other.generateResult, generateResult) || other.generateResult == generateResult)&&(identical(other.lastGeneratedVideo, lastGeneratedVideo) || other.lastGeneratedVideo == lastGeneratedVideo)&&(identical(other.segmentedOutputSummary, segmentedOutputSummary) || other.segmentedOutputSummary == segmentedOutputSummary)&&(identical(other.isGenerating, isGenerating) || other.isGenerating == isGenerating)&&(identical(other.referenceResult, referenceResult) || other.referenceResult == referenceResult)&&const DeepCollectionEquality().equals(other.videoCompatibility, videoCompatibility));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is HomeState&&const DeepCollectionEquality().equals(other.videoItems, videoItems)&&(identical(other.outputConfig, outputConfig) || other.outputConfig == outputConfig)&&(identical(other.exportOptions, exportOptions) || other.exportOptions == exportOptions)&&(identical(other.generateResult, generateResult) || other.generateResult == generateResult)&&(identical(other.lastGeneratedVideo, lastGeneratedVideo) || other.lastGeneratedVideo == lastGeneratedVideo)&&(identical(other.segmentedOutputSummary, segmentedOutputSummary) || other.segmentedOutputSummary == segmentedOutputSummary)&&(identical(other.isGenerating, isGenerating) || other.isGenerating == isGenerating)&&(identical(other.isCheckingTools, isCheckingTools) || other.isCheckingTools == isCheckingTools)&&(identical(other.areToolsReady, areToolsReady) || other.areToolsReady == areToolsReady)&&(identical(other.toolCheckMessage, toolCheckMessage) || other.toolCheckMessage == toolCheckMessage)&&(identical(other.errorMessage, errorMessage) || other.errorMessage == errorMessage)&&(identical(other.referenceResult, referenceResult) || other.referenceResult == referenceResult)&&const DeepCollectionEquality().equals(other.videoCompatibility, videoCompatibility));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(videoItems),outputConfig,exportOptions,generateResult,lastGeneratedVideo,segmentedOutputSummary,isGenerating,referenceResult,const DeepCollectionEquality().hash(videoCompatibility));
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(videoItems),outputConfig,exportOptions,generateResult,lastGeneratedVideo,segmentedOutputSummary,isGenerating,isCheckingTools,areToolsReady,toolCheckMessage,errorMessage,referenceResult,const DeepCollectionEquality().hash(videoCompatibility));
 
 @override
 String toString() {
-  return 'HomeState(videoItems: $videoItems, outputConfig: $outputConfig, exportOptions: $exportOptions, generateResult: $generateResult, lastGeneratedVideo: $lastGeneratedVideo, segmentedOutputSummary: $segmentedOutputSummary, isGenerating: $isGenerating, referenceResult: $referenceResult, videoCompatibility: $videoCompatibility)';
+  return 'HomeState(videoItems: $videoItems, outputConfig: $outputConfig, exportOptions: $exportOptions, generateResult: $generateResult, lastGeneratedVideo: $lastGeneratedVideo, segmentedOutputSummary: $segmentedOutputSummary, isGenerating: $isGenerating, isCheckingTools: $isCheckingTools, areToolsReady: $areToolsReady, toolCheckMessage: $toolCheckMessage, errorMessage: $errorMessage, referenceResult: $referenceResult, videoCompatibility: $videoCompatibility)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $HomeStateCopyWith<$Res>  {
   factory $HomeStateCopyWith(HomeState value, $Res Function(HomeState) _then) = _$HomeStateCopyWithImpl;
 @useResult
 $Res call({
- List<VideoItem> videoItems, OutputConfig outputConfig, ExportOptions exportOptions, GenerateResult? generateResult, GeneratedVideoInfo? lastGeneratedVideo, SegmentedOutputSummary? segmentedOutputSummary, bool isGenerating, ProbeResult? referenceResult, Map<String, bool> videoCompatibility
+ List<VideoItem> videoItems, OutputConfig outputConfig, ExportOptions exportOptions, GenerateResult? generateResult, GeneratedVideoInfo? lastGeneratedVideo, SegmentedOutputSummary? segmentedOutputSummary, bool isGenerating, bool isCheckingTools, bool areToolsReady, String? toolCheckMessage, String? errorMessage, ProbeResult? referenceResult, Map<String, bool> videoCompatibility
 });
 
 
@@ -62,7 +62,7 @@ class _$HomeStateCopyWithImpl<$Res>
 
 /// Create a copy of HomeState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? videoItems = null,Object? outputConfig = null,Object? exportOptions = null,Object? generateResult = freezed,Object? lastGeneratedVideo = freezed,Object? segmentedOutputSummary = freezed,Object? isGenerating = null,Object? referenceResult = freezed,Object? videoCompatibility = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? videoItems = null,Object? outputConfig = null,Object? exportOptions = null,Object? generateResult = freezed,Object? lastGeneratedVideo = freezed,Object? segmentedOutputSummary = freezed,Object? isGenerating = null,Object? isCheckingTools = null,Object? areToolsReady = null,Object? toolCheckMessage = freezed,Object? errorMessage = freezed,Object? referenceResult = freezed,Object? videoCompatibility = null,}) {
   return _then(_self.copyWith(
 videoItems: null == videoItems ? _self.videoItems : videoItems // ignore: cast_nullable_to_non_nullable
 as List<VideoItem>,outputConfig: null == outputConfig ? _self.outputConfig : outputConfig // ignore: cast_nullable_to_non_nullable
@@ -71,7 +71,11 @@ as ExportOptions,generateResult: freezed == generateResult ? _self.generateResul
 as GenerateResult?,lastGeneratedVideo: freezed == lastGeneratedVideo ? _self.lastGeneratedVideo : lastGeneratedVideo // ignore: cast_nullable_to_non_nullable
 as GeneratedVideoInfo?,segmentedOutputSummary: freezed == segmentedOutputSummary ? _self.segmentedOutputSummary : segmentedOutputSummary // ignore: cast_nullable_to_non_nullable
 as SegmentedOutputSummary?,isGenerating: null == isGenerating ? _self.isGenerating : isGenerating // ignore: cast_nullable_to_non_nullable
-as bool,referenceResult: freezed == referenceResult ? _self.referenceResult : referenceResult // ignore: cast_nullable_to_non_nullable
+as bool,isCheckingTools: null == isCheckingTools ? _self.isCheckingTools : isCheckingTools // ignore: cast_nullable_to_non_nullable
+as bool,areToolsReady: null == areToolsReady ? _self.areToolsReady : areToolsReady // ignore: cast_nullable_to_non_nullable
+as bool,toolCheckMessage: freezed == toolCheckMessage ? _self.toolCheckMessage : toolCheckMessage // ignore: cast_nullable_to_non_nullable
+as String?,errorMessage: freezed == errorMessage ? _self.errorMessage : errorMessage // ignore: cast_nullable_to_non_nullable
+as String?,referenceResult: freezed == referenceResult ? _self.referenceResult : referenceResult // ignore: cast_nullable_to_non_nullable
 as ProbeResult?,videoCompatibility: null == videoCompatibility ? _self.videoCompatibility : videoCompatibility // ignore: cast_nullable_to_non_nullable
 as Map<String, bool>,
   ));
@@ -212,10 +216,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<VideoItem> videoItems,  OutputConfig outputConfig,  ExportOptions exportOptions,  GenerateResult? generateResult,  GeneratedVideoInfo? lastGeneratedVideo,  SegmentedOutputSummary? segmentedOutputSummary,  bool isGenerating,  ProbeResult? referenceResult,  Map<String, bool> videoCompatibility)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<VideoItem> videoItems,  OutputConfig outputConfig,  ExportOptions exportOptions,  GenerateResult? generateResult,  GeneratedVideoInfo? lastGeneratedVideo,  SegmentedOutputSummary? segmentedOutputSummary,  bool isGenerating,  bool isCheckingTools,  bool areToolsReady,  String? toolCheckMessage,  String? errorMessage,  ProbeResult? referenceResult,  Map<String, bool> videoCompatibility)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _HomeState() when $default != null:
-return $default(_that.videoItems,_that.outputConfig,_that.exportOptions,_that.generateResult,_that.lastGeneratedVideo,_that.segmentedOutputSummary,_that.isGenerating,_that.referenceResult,_that.videoCompatibility);case _:
+return $default(_that.videoItems,_that.outputConfig,_that.exportOptions,_that.generateResult,_that.lastGeneratedVideo,_that.segmentedOutputSummary,_that.isGenerating,_that.isCheckingTools,_that.areToolsReady,_that.toolCheckMessage,_that.errorMessage,_that.referenceResult,_that.videoCompatibility);case _:
   return orElse();
 
 }
@@ -233,10 +237,10 @@ return $default(_that.videoItems,_that.outputConfig,_that.exportOptions,_that.ge
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<VideoItem> videoItems,  OutputConfig outputConfig,  ExportOptions exportOptions,  GenerateResult? generateResult,  GeneratedVideoInfo? lastGeneratedVideo,  SegmentedOutputSummary? segmentedOutputSummary,  bool isGenerating,  ProbeResult? referenceResult,  Map<String, bool> videoCompatibility)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<VideoItem> videoItems,  OutputConfig outputConfig,  ExportOptions exportOptions,  GenerateResult? generateResult,  GeneratedVideoInfo? lastGeneratedVideo,  SegmentedOutputSummary? segmentedOutputSummary,  bool isGenerating,  bool isCheckingTools,  bool areToolsReady,  String? toolCheckMessage,  String? errorMessage,  ProbeResult? referenceResult,  Map<String, bool> videoCompatibility)  $default,) {final _that = this;
 switch (_that) {
 case _HomeState():
-return $default(_that.videoItems,_that.outputConfig,_that.exportOptions,_that.generateResult,_that.lastGeneratedVideo,_that.segmentedOutputSummary,_that.isGenerating,_that.referenceResult,_that.videoCompatibility);case _:
+return $default(_that.videoItems,_that.outputConfig,_that.exportOptions,_that.generateResult,_that.lastGeneratedVideo,_that.segmentedOutputSummary,_that.isGenerating,_that.isCheckingTools,_that.areToolsReady,_that.toolCheckMessage,_that.errorMessage,_that.referenceResult,_that.videoCompatibility);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -253,10 +257,10 @@ return $default(_that.videoItems,_that.outputConfig,_that.exportOptions,_that.ge
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<VideoItem> videoItems,  OutputConfig outputConfig,  ExportOptions exportOptions,  GenerateResult? generateResult,  GeneratedVideoInfo? lastGeneratedVideo,  SegmentedOutputSummary? segmentedOutputSummary,  bool isGenerating,  ProbeResult? referenceResult,  Map<String, bool> videoCompatibility)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<VideoItem> videoItems,  OutputConfig outputConfig,  ExportOptions exportOptions,  GenerateResult? generateResult,  GeneratedVideoInfo? lastGeneratedVideo,  SegmentedOutputSummary? segmentedOutputSummary,  bool isGenerating,  bool isCheckingTools,  bool areToolsReady,  String? toolCheckMessage,  String? errorMessage,  ProbeResult? referenceResult,  Map<String, bool> videoCompatibility)?  $default,) {final _that = this;
 switch (_that) {
 case _HomeState() when $default != null:
-return $default(_that.videoItems,_that.outputConfig,_that.exportOptions,_that.generateResult,_that.lastGeneratedVideo,_that.segmentedOutputSummary,_that.isGenerating,_that.referenceResult,_that.videoCompatibility);case _:
+return $default(_that.videoItems,_that.outputConfig,_that.exportOptions,_that.generateResult,_that.lastGeneratedVideo,_that.segmentedOutputSummary,_that.isGenerating,_that.isCheckingTools,_that.areToolsReady,_that.toolCheckMessage,_that.errorMessage,_that.referenceResult,_that.videoCompatibility);case _:
   return null;
 
 }
@@ -268,7 +272,7 @@ return $default(_that.videoItems,_that.outputConfig,_that.exportOptions,_that.ge
 
 
 class _HomeState implements HomeState {
-  const _HomeState({final  List<VideoItem> videoItems = const [], this.outputConfig = const OutputConfig(baseName: '', extension: 'mp4'), this.exportOptions = const ExportOptions(), this.generateResult, this.lastGeneratedVideo, this.segmentedOutputSummary, this.isGenerating = false, this.referenceResult, final  Map<String, bool> videoCompatibility = const {}}): _videoItems = videoItems,_videoCompatibility = videoCompatibility;
+  const _HomeState({final  List<VideoItem> videoItems = const [], this.outputConfig = const OutputConfig(baseName: '', extension: 'mp4'), this.exportOptions = const ExportOptions(), this.generateResult, this.lastGeneratedVideo, this.segmentedOutputSummary, this.isGenerating = false, this.isCheckingTools = true, this.areToolsReady = false, this.toolCheckMessage, this.errorMessage, this.referenceResult, final  Map<String, bool> videoCompatibility = const {}}): _videoItems = videoItems,_videoCompatibility = videoCompatibility;
   
 
  final  List<VideoItem> _videoItems;
@@ -284,6 +288,10 @@ class _HomeState implements HomeState {
 @override final  GeneratedVideoInfo? lastGeneratedVideo;
 @override final  SegmentedOutputSummary? segmentedOutputSummary;
 @override@JsonKey() final  bool isGenerating;
+@override@JsonKey() final  bool isCheckingTools;
+@override@JsonKey() final  bool areToolsReady;
+@override final  String? toolCheckMessage;
+@override final  String? errorMessage;
 @override final  ProbeResult? referenceResult;
  final  Map<String, bool> _videoCompatibility;
 @override@JsonKey() Map<String, bool> get videoCompatibility {
@@ -303,16 +311,16 @@ _$HomeStateCopyWith<_HomeState> get copyWith => __$HomeStateCopyWithImpl<_HomeSt
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _HomeState&&const DeepCollectionEquality().equals(other._videoItems, _videoItems)&&(identical(other.outputConfig, outputConfig) || other.outputConfig == outputConfig)&&(identical(other.exportOptions, exportOptions) || other.exportOptions == exportOptions)&&(identical(other.generateResult, generateResult) || other.generateResult == generateResult)&&(identical(other.lastGeneratedVideo, lastGeneratedVideo) || other.lastGeneratedVideo == lastGeneratedVideo)&&(identical(other.segmentedOutputSummary, segmentedOutputSummary) || other.segmentedOutputSummary == segmentedOutputSummary)&&(identical(other.isGenerating, isGenerating) || other.isGenerating == isGenerating)&&(identical(other.referenceResult, referenceResult) || other.referenceResult == referenceResult)&&const DeepCollectionEquality().equals(other._videoCompatibility, _videoCompatibility));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _HomeState&&const DeepCollectionEquality().equals(other._videoItems, _videoItems)&&(identical(other.outputConfig, outputConfig) || other.outputConfig == outputConfig)&&(identical(other.exportOptions, exportOptions) || other.exportOptions == exportOptions)&&(identical(other.generateResult, generateResult) || other.generateResult == generateResult)&&(identical(other.lastGeneratedVideo, lastGeneratedVideo) || other.lastGeneratedVideo == lastGeneratedVideo)&&(identical(other.segmentedOutputSummary, segmentedOutputSummary) || other.segmentedOutputSummary == segmentedOutputSummary)&&(identical(other.isGenerating, isGenerating) || other.isGenerating == isGenerating)&&(identical(other.isCheckingTools, isCheckingTools) || other.isCheckingTools == isCheckingTools)&&(identical(other.areToolsReady, areToolsReady) || other.areToolsReady == areToolsReady)&&(identical(other.toolCheckMessage, toolCheckMessage) || other.toolCheckMessage == toolCheckMessage)&&(identical(other.errorMessage, errorMessage) || other.errorMessage == errorMessage)&&(identical(other.referenceResult, referenceResult) || other.referenceResult == referenceResult)&&const DeepCollectionEquality().equals(other._videoCompatibility, _videoCompatibility));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_videoItems),outputConfig,exportOptions,generateResult,lastGeneratedVideo,segmentedOutputSummary,isGenerating,referenceResult,const DeepCollectionEquality().hash(_videoCompatibility));
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_videoItems),outputConfig,exportOptions,generateResult,lastGeneratedVideo,segmentedOutputSummary,isGenerating,isCheckingTools,areToolsReady,toolCheckMessage,errorMessage,referenceResult,const DeepCollectionEquality().hash(_videoCompatibility));
 
 @override
 String toString() {
-  return 'HomeState(videoItems: $videoItems, outputConfig: $outputConfig, exportOptions: $exportOptions, generateResult: $generateResult, lastGeneratedVideo: $lastGeneratedVideo, segmentedOutputSummary: $segmentedOutputSummary, isGenerating: $isGenerating, referenceResult: $referenceResult, videoCompatibility: $videoCompatibility)';
+  return 'HomeState(videoItems: $videoItems, outputConfig: $outputConfig, exportOptions: $exportOptions, generateResult: $generateResult, lastGeneratedVideo: $lastGeneratedVideo, segmentedOutputSummary: $segmentedOutputSummary, isGenerating: $isGenerating, isCheckingTools: $isCheckingTools, areToolsReady: $areToolsReady, toolCheckMessage: $toolCheckMessage, errorMessage: $errorMessage, referenceResult: $referenceResult, videoCompatibility: $videoCompatibility)';
 }
 
 
@@ -323,7 +331,7 @@ abstract mixin class _$HomeStateCopyWith<$Res> implements $HomeStateCopyWith<$Re
   factory _$HomeStateCopyWith(_HomeState value, $Res Function(_HomeState) _then) = __$HomeStateCopyWithImpl;
 @override @useResult
 $Res call({
- List<VideoItem> videoItems, OutputConfig outputConfig, ExportOptions exportOptions, GenerateResult? generateResult, GeneratedVideoInfo? lastGeneratedVideo, SegmentedOutputSummary? segmentedOutputSummary, bool isGenerating, ProbeResult? referenceResult, Map<String, bool> videoCompatibility
+ List<VideoItem> videoItems, OutputConfig outputConfig, ExportOptions exportOptions, GenerateResult? generateResult, GeneratedVideoInfo? lastGeneratedVideo, SegmentedOutputSummary? segmentedOutputSummary, bool isGenerating, bool isCheckingTools, bool areToolsReady, String? toolCheckMessage, String? errorMessage, ProbeResult? referenceResult, Map<String, bool> videoCompatibility
 });
 
 
@@ -340,7 +348,7 @@ class __$HomeStateCopyWithImpl<$Res>
 
 /// Create a copy of HomeState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? videoItems = null,Object? outputConfig = null,Object? exportOptions = null,Object? generateResult = freezed,Object? lastGeneratedVideo = freezed,Object? segmentedOutputSummary = freezed,Object? isGenerating = null,Object? referenceResult = freezed,Object? videoCompatibility = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? videoItems = null,Object? outputConfig = null,Object? exportOptions = null,Object? generateResult = freezed,Object? lastGeneratedVideo = freezed,Object? segmentedOutputSummary = freezed,Object? isGenerating = null,Object? isCheckingTools = null,Object? areToolsReady = null,Object? toolCheckMessage = freezed,Object? errorMessage = freezed,Object? referenceResult = freezed,Object? videoCompatibility = null,}) {
   return _then(_HomeState(
 videoItems: null == videoItems ? _self._videoItems : videoItems // ignore: cast_nullable_to_non_nullable
 as List<VideoItem>,outputConfig: null == outputConfig ? _self.outputConfig : outputConfig // ignore: cast_nullable_to_non_nullable
@@ -349,7 +357,11 @@ as ExportOptions,generateResult: freezed == generateResult ? _self.generateResul
 as GenerateResult?,lastGeneratedVideo: freezed == lastGeneratedVideo ? _self.lastGeneratedVideo : lastGeneratedVideo // ignore: cast_nullable_to_non_nullable
 as GeneratedVideoInfo?,segmentedOutputSummary: freezed == segmentedOutputSummary ? _self.segmentedOutputSummary : segmentedOutputSummary // ignore: cast_nullable_to_non_nullable
 as SegmentedOutputSummary?,isGenerating: null == isGenerating ? _self.isGenerating : isGenerating // ignore: cast_nullable_to_non_nullable
-as bool,referenceResult: freezed == referenceResult ? _self.referenceResult : referenceResult // ignore: cast_nullable_to_non_nullable
+as bool,isCheckingTools: null == isCheckingTools ? _self.isCheckingTools : isCheckingTools // ignore: cast_nullable_to_non_nullable
+as bool,areToolsReady: null == areToolsReady ? _self.areToolsReady : areToolsReady // ignore: cast_nullable_to_non_nullable
+as bool,toolCheckMessage: freezed == toolCheckMessage ? _self.toolCheckMessage : toolCheckMessage // ignore: cast_nullable_to_non_nullable
+as String?,errorMessage: freezed == errorMessage ? _self.errorMessage : errorMessage // ignore: cast_nullable_to_non_nullable
+as String?,referenceResult: freezed == referenceResult ? _self.referenceResult : referenceResult // ignore: cast_nullable_to_non_nullable
 as ProbeResult?,videoCompatibility: null == videoCompatibility ? _self._videoCompatibility : videoCompatibility // ignore: cast_nullable_to_non_nullable
 as Map<String, bool>,
   ));

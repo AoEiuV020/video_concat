@@ -6,6 +6,7 @@ import '../models/export_options.dart';
 class PreferencesRepository {
   static const _keyExtension = 'output_extension';
   static const _keyFFmpegPath = 'ffmpeg_path';
+  static const _keyFFprobePath = 'ffprobe_path';
 
   // 导出选项键
   static const _keyExportRemember = 'export_remember';
@@ -44,6 +45,18 @@ class PreferencesRepository {
   Future<void> saveFFmpegPath(String path) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_keyFFmpegPath, path);
+  }
+
+  /// 获取 FFprobe 路径
+  Future<String?> getFFprobePath() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_keyFFprobePath);
+  }
+
+  /// 保存 FFprobe 路径
+  Future<void> saveFFprobePath(String path) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keyFFprobePath, path);
   }
 
   /// 加载导出选项

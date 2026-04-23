@@ -27,7 +27,10 @@ Future<VideoInfoData> videoInfo(
   try {
     final ffprobe = ref.read(ffprobeServiceProvider);
     final ffmpeg = ref.read(ffmpegServiceProvider);
-    ffprobe.deriveFromFFmpegPath(ffmpeg.ffmpegPath);
+    if (ffprobe.ffprobePath.trim().isEmpty ||
+        ffprobe.ffprobePath == 'ffprobe') {
+      ffprobe.deriveFromFFmpegPath(ffmpeg.ffmpegPath);
+    }
 
     final result = await ffprobe.probe(filePath);
     logger.d(

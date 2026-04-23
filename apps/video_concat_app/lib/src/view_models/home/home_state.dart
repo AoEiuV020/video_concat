@@ -17,6 +17,10 @@ abstract class HomeState with _$HomeState {
     GeneratedVideoInfo? lastGeneratedVideo,
     SegmentedOutputSummary? segmentedOutputSummary,
     @Default(false) bool isGenerating,
+    @Default(true) bool isCheckingTools,
+    @Default(false) bool areToolsReady,
+    String? toolCheckMessage,
+    String? errorMessage,
     ProbeResult? referenceResult,
     @Default({}) Map<String, bool> videoCompatibility,
   }) = _HomeState;

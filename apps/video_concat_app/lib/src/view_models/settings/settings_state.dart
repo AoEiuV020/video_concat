@@ -8,8 +8,13 @@ part 'settings_state.freezed.dart';
 @freezed
 abstract class SettingsState with _$SettingsState {
   const factory SettingsState({
-    @Default(AppSettings(ffmpegPath: 'ffmpeg')) AppSettings settings,
+    @Default(AppSettings(ffmpegPath: 'ffmpeg', ffprobePath: 'ffprobe'))
+    AppSettings settings,
     @Default(false) bool isFFmpegValid,
+    @Default(false) bool isFFprobeValid,
+    String? ffmpegVersion,
+    String? ffprobeVersion,
     @Default(true) bool isValidating,
+    String? errorMessage,
   }) = _SettingsState;
 }

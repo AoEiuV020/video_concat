@@ -21,6 +21,8 @@ void main() {
           preferencesRepositoryProvider.overrideWithValue(
             _FakePreferencesRepository(),
           ),
+          ffmpegServiceProvider.overrideWithValue(_ImmediateFFmpegService()),
+          ffprobeServiceProvider.overrideWithValue(_ImmediateFFprobeService()),
           videoConcatServiceProvider.overrideWithValue(
             _FakeVideoConcatService(exitCode: 0),
           ),
@@ -49,6 +51,8 @@ void main() {
               exportOptions: const ExportOptions(autoOpenVideoInfo: true),
             ),
           ),
+          ffmpegServiceProvider.overrideWithValue(_ImmediateFFmpegService()),
+          ffprobeServiceProvider.overrideWithValue(_ImmediateFFprobeService()),
           videoConcatServiceProvider.overrideWithValue(
             _FakeVideoConcatService(exitCode: 0),
           ),
@@ -81,6 +85,8 @@ void main() {
               ),
             ),
           ),
+          ffmpegServiceProvider.overrideWithValue(_ImmediateFFmpegService()),
+          ffprobeServiceProvider.overrideWithValue(_ImmediateFFprobeService()),
           videoConcatServiceProvider.overrideWithValue(
             _FakeVideoConcatService(exitCode: 0),
           ),
@@ -145,7 +151,23 @@ final class _FakePreferencesRepository extends PreferencesRepository {
   Future<ExportOptions> loadExportOptions() async => exportOptions;
 
   @override
+  Future<String?> getFFmpegPath() async => 'ffmpeg';
+
+  @override
+  Future<String?> getFFprobePath() async => 'ffprobe';
+
+  @override
   Future<void> saveExportOptions(ExportOptions options) async {}
+}
+
+final class _ImmediateFFmpegService extends FFmpegService {
+  @override
+  Future<bool> validate() async => true;
+}
+
+final class _ImmediateFFprobeService extends FFprobeService {
+  @override
+  Future<bool> validate() async => true;
 }
 
 final class _FakeVideoConcatService extends VideoConcatService {
