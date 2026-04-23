@@ -145,18 +145,36 @@ class HomeViewModel extends _$HomeViewModel {
       final ffprobe = ref.read(ffprobeServiceProvider);
       final ffmpegOk = await ffmpeg.validate();
       if (!ref.mounted) return;
+      if (!ffmpegOk) {
+        const message = 'FFmpeg 不可用，请到设置页修复路径';
+        state = state.copyWith(
+          isCheckingTools: false,
+          areToolsReady: false,
+          toolCheckMessage: message,
+        );
+        _emitSnackbar(message);
+        return;
+      }
+
       final ffprobeOk = await ffprobe.validate();
       if (!ref.mounted) return;
-      final ready = ffmpegOk && ffprobeOk;
-      final msg = ready ? null : 'FFmpeg 或 FFprobe 不可用，请到设置页修复路径';
+      if (!ffprobeOk) {
+        const message = 'FFprobe 不可用，请到设置页修复路径';
+        state = state.copyWith(
+          isCheckingTools: false,
+          areToolsReady: false,
+          toolCheckMessage: message,
+        );
+        _emitSnackbar(message);
+        return;
+      }
+
       state = state.copyWith(
         isCheckingTools: false,
-        areToolsReady: ready,
-        toolCheckMessage: msg,
+        areToolsReady: true,
+        toolCheckMessage: null,
+        errorMessage: null,
       );
-      if (!ready && msg != null) {
-        _emitSnackbar(msg);
-      }
     } catch (e, s) {
       if (!ref.mounted) return;
       _reportError('工具校验失败', e, s, userMessage: '工具校验失败：$e');
@@ -167,6 +185,22 @@ class HomeViewModel extends _$HomeViewModel {
         toolCheckMessage: message,
       );
       _emitSnackbar(message);
+    }
+  }
+
+  /// 从设置页返回主页后主动重检工具状态
+  Future<void> refreshExternalToolsStatus() async {
+    try {
+      await _setupExternalTools();
+      if (!ref.mounted) return;
+      await _validateExternalTools();
+    } catch (e, s) {
+      _reportError(
+        'refreshExternalToolsStatus 失败',
+        e,
+        s,
+        userMessage: '刷新工具状态失败：$e',
+      );
     }
   }
 

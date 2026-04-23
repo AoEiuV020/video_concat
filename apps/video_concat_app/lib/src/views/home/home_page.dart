@@ -49,8 +49,17 @@ class _HomePageState extends ConsumerState<HomePage> {
           _navigatedToSettings = true;
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (!mounted) return;
-            context.push('/settings');
+            context.push('/settings').then((_) {
+              if (!mounted) return;
+              ref
+                  .read(homeViewModelProvider.notifier)
+                  .refreshExternalToolsStatus();
+            });
           });
+        }
+
+        if (next.areToolsReady) {
+          _navigatedToSettings = false;
         }
       },
       fireImmediately: true,
@@ -116,7 +125,12 @@ class _HomePageState extends ConsumerState<HomePage> {
           ),
           IconButton(
             icon: const Icon(Icons.settings),
-            onPressed: () => context.push('/settings'),
+            onPressed: () {
+              context.push('/settings').then((_) {
+                if (!mounted) return;
+                vm.refreshExternalToolsStatus();
+              });
+            },
           ),
         ],
       ),
