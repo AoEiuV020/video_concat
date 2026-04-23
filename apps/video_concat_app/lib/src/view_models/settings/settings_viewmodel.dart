@@ -107,9 +107,17 @@ class SettingsViewModel extends _$SettingsViewModel {
     required String ffprobePath,
   }) async {
     logger.d('refreshByInputs ffmpegPath=$ffmpegPath ffprobePath=$ffprobePath');
+    final resolvedFFmpegPath = await _resolveInputPath(
+      ExternalTool.ffmpeg,
+      ffmpegPath,
+    );
+    final resolvedFFprobePath = await _resolveInputPath(
+      ExternalTool.ffprobe,
+      ffprobePath,
+    );
     final nextSettings = state.settings.copyWith(
-      ffmpegPath: ffmpegPath,
-      ffprobePath: ffprobePath,
+      ffmpegPath: resolvedFFmpegPath,
+      ffprobePath: resolvedFFprobePath,
     );
     await _saveAndValidate(
       settings: nextSettings,
@@ -138,14 +146,31 @@ class SettingsViewModel extends _$SettingsViewModel {
 
   Future<void> _updateToolPath(ExternalTool tool, String path) async {
     logger.d('updateToolPath tool=$tool path=$path');
+    final resolvedPath = await _resolveInputPath(tool, path);
     final nextSettings = tool == ExternalTool.ffmpeg
-        ? state.settings.copyWith(ffmpegPath: path)
-        : state.settings.copyWith(ffprobePath: path);
+        ? state.settings.copyWith(ffmpegPath: resolvedPath)
+        : state.settings.copyWith(ffprobePath: resolvedPath);
     await _saveAndValidate(
       settings: nextSettings,
       action: 'updateToolPath 失败 tool=$tool',
       userMessage: '保存路径失败：',
     );
+  }
+
+  Future<String> _resolveInputPath(ExternalTool tool, String path) async {
+    final trimmedPath = path.trim();
+    if (trimmedPath.isNotEmpty) {
+      return trimmedPath;
+    }
+
+    final discoveredPath = await _autoDiscoverAndPersist(tool);
+    if (discoveredPath != null && discoveredPath.isNotEmpty) {
+      return discoveredPath;
+    }
+
+    final spec = externalToolSpecsForCurrentPlatform()[tool];
+    return spec?.commandName ??
+        (tool == ExternalTool.ffmpeg ? 'ffmpeg' : 'ffprobe');
   }
 
   /// 浏览选择 FFmpeg 路径
