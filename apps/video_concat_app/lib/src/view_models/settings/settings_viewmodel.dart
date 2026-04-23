@@ -101,30 +101,51 @@ class SettingsViewModel extends _$SettingsViewModel {
     await _updateToolPath(ExternalTool.ffprobe, path);
   }
 
-  Future<void> _updateToolPath(ExternalTool tool, String path) async {
-    logger.d('updateToolPath tool=$tool path=$path');
+  /// 按当前输入主动刷新工具状态
+  Future<void> refreshByInputs({
+    required String ffmpegPath,
+    required String ffprobePath,
+  }) async {
+    logger.d('refreshByInputs ffmpegPath=$ffmpegPath ffprobePath=$ffprobePath');
+    final nextSettings = state.settings.copyWith(
+      ffmpegPath: ffmpegPath,
+      ffprobePath: ffprobePath,
+    );
+    await _saveAndValidate(
+      settings: nextSettings,
+      action: 'refreshByInputs 失败',
+      userMessage: '刷新失败：',
+    );
+  }
+
+  Future<void> _saveAndValidate({
+    required AppSettings settings,
+    required String action,
+    required String userMessage,
+  }) async {
     try {
-      final nextSettings = tool == ExternalTool.ffmpeg
-          ? state.settings.copyWith(ffmpegPath: path)
-          : state.settings.copyWith(ffprobePath: path);
-      state = state.copyWith(settings: nextSettings, errorMessage: null);
+      state = state.copyWith(settings: settings, errorMessage: null);
 
       final prefs = ref.read(preferencesRepositoryProvider);
-      if (tool == ExternalTool.ffmpeg) {
-        await prefs.saveFFmpegPath(path);
-      } else {
-        await prefs.saveFFprobePath(path);
-      }
+      await prefs.saveFFmpegPath(settings.ffmpegPath);
+      await prefs.saveFFprobePath(settings.ffprobePath);
 
       await _validateCurrentPath();
     } catch (e, s) {
-      _reportError(
-        'updateToolPath 失败 tool=$tool',
-        e,
-        s,
-        userMessage: '保存路径失败：$e',
-      );
+      _reportError(action, e, s, userMessage: '$userMessage$e');
     }
+  }
+
+  Future<void> _updateToolPath(ExternalTool tool, String path) async {
+    logger.d('updateToolPath tool=$tool path=$path');
+    final nextSettings = tool == ExternalTool.ffmpeg
+        ? state.settings.copyWith(ffmpegPath: path)
+        : state.settings.copyWith(ffprobePath: path);
+    await _saveAndValidate(
+      settings: nextSettings,
+      action: 'updateToolPath 失败 tool=$tool',
+      userMessage: '保存路径失败：',
+    );
   }
 
   /// 浏览选择 FFmpeg 路径

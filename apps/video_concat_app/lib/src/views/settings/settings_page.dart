@@ -5,25 +5,78 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../view_models/settings/settings_viewmodel.dart';
 
 /// 设置页
-class SettingsPage extends ConsumerWidget {
+class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SettingsPage> createState() => _SettingsPageState();
+}
+
+class _SettingsPageState extends ConsumerState<SettingsPage> {
+  late final TextEditingController _ffmpegController;
+  late final TextEditingController _ffprobeController;
+
+  @override
+  void initState() {
+    super.initState();
+    _ffmpegController = TextEditingController();
+    _ffprobeController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _ffmpegController.dispose();
+    _ffprobeController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final state = ref.watch(settingsViewModelProvider);
     final vm = ref.read(settingsViewModelProvider.notifier);
 
+    if (_ffmpegController.text != state.settings.ffmpegPath) {
+      _ffmpegController.value = TextEditingValue(
+        text: state.settings.ffmpegPath,
+        selection: TextSelection.collapsed(
+          offset: state.settings.ffmpegPath.length,
+        ),
+      );
+    }
+    if (_ffprobeController.text != state.settings.ffprobePath) {
+      _ffprobeController.value = TextEditingValue(
+        text: state.settings.ffprobePath,
+        selection: TextSelection.collapsed(
+          offset: state.settings.ffprobePath.length,
+        ),
+      );
+    }
+
     return Scaffold(
-      appBar: AppBar(title: const Text('设置')),
+      appBar: AppBar(
+        title: const Text('设置'),
+        actions: [
+          IconButton(
+            tooltip: '刷新',
+            icon: const Icon(Icons.refresh),
+            onPressed: state.isValidating
+                ? null
+                : () => vm.refreshByInputs(
+                    ffmpegPath: _ffmpegController.text.trim(),
+                    ffprobePath: _ffprobeController.text.trim(),
+                  ),
+          ),
+        ],
+      ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           _ToolCard(
             title: 'FFmpeg 路径',
-            value: state.settings.ffmpegPath,
             isValidating: state.isValidating,
             isValid: state.isFFmpegValid,
             version: state.ffmpegVersion,
+            controller: _ffmpegController,
             onSubmitted: vm.updateFFmpegPath,
             onBrowse: vm.browseFFmpegPath,
             hintText: 'ffmpeg',
@@ -31,10 +84,10 @@ class SettingsPage extends ConsumerWidget {
           const SizedBox(height: 12),
           _ToolCard(
             title: 'FFprobe 路径',
-            value: state.settings.ffprobePath,
             isValidating: state.isValidating,
             isValid: state.isFFprobeValid,
             version: state.ffprobeVersion,
+            controller: _ffprobeController,
             onSubmitted: vm.updateFFprobePath,
             onBrowse: vm.browseFFprobePath,
             hintText: 'ffprobe',
@@ -57,20 +110,20 @@ class SettingsPage extends ConsumerWidget {
 
 class _ToolCard extends StatelessWidget {
   final String title;
-  final String value;
   final bool isValidating;
   final bool isValid;
   final String? version;
+  final TextEditingController controller;
   final Future<void> Function(String) onSubmitted;
   final Future<void> Function() onBrowse;
   final String hintText;
 
   const _ToolCard({
     required this.title,
-    required this.value,
     required this.isValidating,
     required this.isValid,
     required this.version,
+    required this.controller,
     required this.onSubmitted,
     required this.onBrowse,
     required this.hintText,
@@ -107,8 +160,7 @@ class _ToolCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: TextFormField(
-                    key: ValueKey('$title:$value'),
-                    initialValue: value,
+                    controller: controller,
                     decoration: InputDecoration(
                       hintText: hintText,
                       border: const OutlineInputBorder(),
