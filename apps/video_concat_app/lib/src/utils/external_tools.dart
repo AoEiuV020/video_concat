@@ -1,7 +1,26 @@
 import 'dart:io';
 
+import 'tool_candidate_paths.dart';
+
 /// 支持的外部工具。
 enum ExternalTool { ffmpeg, ffprobe }
+
+/// 判断路径是否为绝对路径（支持 Unix/Windows）。
+bool isAbsoluteToolPath(String path) {
+  return path.startsWith('/') || RegExp(r'^[A-Za-z]:[\\/]').hasMatch(path);
+}
+
+/// 仅在绝对路径时检查文件是否存在。
+Future<bool> toolPathExistsIfAbsolute(String path) async {
+  if (!isAbsoluteToolPath(path)) {
+    return true;
+  }
+  try {
+    return File(path).exists();
+  } catch (_) {
+    return false;
+  }
+}
 
 /// 外部工具定义：统一维护名称与候选路径。
 class ExternalToolSpec {
@@ -30,7 +49,7 @@ Map<ExternalTool, ExternalToolSpec> externalToolSpecsForCurrentPlatform() {
       tool: tool,
       displayName: _displayName(tool),
       commandName: commandName,
-      candidatePaths: _candidatePathsForCurrentPlatform(commandName),
+      candidatePaths: candidatePathsForCurrentPlatform(commandName),
     );
   }
   return specs;
@@ -52,35 +71,4 @@ String _commandName(ExternalTool tool) {
     case ExternalTool.ffprobe:
       return Platform.isWindows ? 'ffprobe.exe' : 'ffprobe';
   }
-}
-
-List<String> _candidatePathsForCurrentPlatform(String commandName) {
-  if (Platform.isMacOS) {
-    return [
-      '/opt/homebrew/bin/$commandName',
-      '/usr/local/bin/$commandName',
-      '/usr/bin/$commandName',
-      commandName,
-    ];
-  }
-
-  if (Platform.isLinux) {
-    return [
-      '/usr/local/bin/$commandName',
-      '/usr/bin/$commandName',
-      '/snap/bin/$commandName',
-      commandName,
-    ];
-  }
-
-  if (Platform.isWindows) {
-    return [
-      'C:/ffmpeg/bin/$commandName',
-      'C:/Program Files/ffmpeg/bin/$commandName',
-      'C:/Program Files (x86)/ffmpeg/bin/$commandName',
-      commandName,
-    ];
-  }
-
-  return [commandName];
 }

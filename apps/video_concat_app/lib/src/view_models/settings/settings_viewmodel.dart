@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:file_picker/file_picker.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -200,7 +198,7 @@ class SettingsViewModel extends _$SettingsViewModel {
     final ffmpeg = ref.read(ffmpegServiceProvider);
     final ffprobe = ref.read(ffprobeServiceProvider);
 
-    if (_isAbsolutePath(candidate) && !await _exists(candidate)) {
+    if (!await toolPathExistsIfAbsolute(candidate)) {
       return false;
     }
 
@@ -217,18 +215,6 @@ class SettingsViewModel extends _$SettingsViewModel {
     final ok = await ffprobe.validate();
     ffprobe.ffprobePath = oldPath;
     return ok;
-  }
-
-  bool _isAbsolutePath(String path) {
-    return path.startsWith('/') || RegExp(r'^[A-Za-z]:[\\/]').hasMatch(path);
-  }
-
-  Future<bool> _exists(String path) async {
-    try {
-      return File(path).exists();
-    } catch (_) {
-      return false;
-    }
   }
 
   void _reportError(

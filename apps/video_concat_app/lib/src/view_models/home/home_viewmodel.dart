@@ -119,7 +119,7 @@ class HomeViewModel extends _$HomeViewModel {
 
     for (final candidate in spec.candidatePaths) {
       try {
-        if (_isAbsolutePath(candidate) && !(await File(candidate).exists())) {
+        if (!await toolPathExistsIfAbsolute(candidate)) {
           continue;
         }
         if (await validateCandidate(candidate)) {
@@ -162,10 +162,6 @@ class HomeViewModel extends _$HomeViewModel {
         toolCheckMessage: '工具校验失败，请前往设置页修复路径',
       );
     }
-  }
-
-  bool _isAbsolutePath(String path) {
-    return path.startsWith('/') || RegExp(r'^[A-Za-z]:[\\/]').hasMatch(path);
   }
 
   /// 添加视频文件

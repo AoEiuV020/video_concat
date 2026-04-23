@@ -26,6 +26,7 @@ class HomePage extends ConsumerStatefulWidget {
 
 class _HomePageState extends ConsumerState<HomePage> {
   final _scrollController = ScrollController();
+  bool _navigatedToSettings = false;
 
   @override
   void dispose() {
@@ -48,6 +49,16 @@ class _HomePageState extends ConsumerState<HomePage> {
   Widget build(BuildContext context) {
     final state = ref.watch(homeViewModelProvider);
     final vm = ref.read(homeViewModelProvider.notifier);
+
+    if (!state.isCheckingTools &&
+        !state.areToolsReady &&
+        !_navigatedToSettings) {
+      _navigatedToSettings = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        context.push('/settings');
+      });
+    }
 
     ref.listen(homeViewModelProvider.select((s) => s.isGenerating), (
       prev,
@@ -95,6 +106,7 @@ class _HomePageState extends ConsumerState<HomePage> {
         }
 
         try {
+          _navigatedToSettings = true;
           context.push('/settings');
         } catch (e, s) {
           logger.e('跳转设置页失败', error: e, stackTrace: s);
