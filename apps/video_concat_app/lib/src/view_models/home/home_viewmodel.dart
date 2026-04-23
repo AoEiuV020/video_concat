@@ -114,7 +114,8 @@ class HomeViewModel extends _$HomeViewModel {
     final spec = specs[tool]!;
     final trimmed = currentPath.trim();
 
-    if (trimmed.isNotEmpty && await validateCandidate(trimmed)) {
+    // 只要已有保存值（即使不可用）就保持原值，不做自动改写。
+    if (trimmed.isNotEmpty) {
       return trimmed;
     }
 
