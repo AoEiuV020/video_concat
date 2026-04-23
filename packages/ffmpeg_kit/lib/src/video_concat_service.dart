@@ -49,7 +49,9 @@ class VideoConcatService {
     bool useCustomSegments = false,
     OutputCallback? onOutput,
   }) async {
-    logger.i('concat 开始 entries=${entries.length} output=$outputPath useCustomSegments=$useCustomSegments');
+    logger.i(
+      'concat 开始 entries=${entries.length} output=$outputPath useCustomSegments=$useCustomSegments',
+    );
 
     // 自定义片段拆分模式
     if (useCustomSegments) {
@@ -157,11 +159,9 @@ class VideoConcatService {
     // 获取输出目录和文件信息
     final outputDir = File(outputPath).parent.path;
     final outputFile = File(outputPath).path;
-    final baseName = File(outputFile)
-        .path
-        .split(RegExp(r'[\\/]'))
-        .last
-        .replaceFirst(RegExp(r'\.[^.]*$'), '');
+    final baseName = File(
+      outputFile,
+    ).path.split(RegExp(r'[\\/]')).last.replaceFirst(RegExp(r'\.[^.]*$'), '');
     final extension = outputFile.substring(outputFile.lastIndexOf('.'));
 
     int globalSegmentIndex = 0;
@@ -184,7 +184,9 @@ class VideoConcatService {
           final startSec = segment.inpoint / 1000000.0;
           final endSec = segment.outpoint / 1000000.0;
 
-          logger.d('处理片段 $globalSegmentIndex: $startSec~$endSec 秒 → $segmentPath');
+          logger.d(
+            '处理片段 $globalSegmentIndex: $startSec~$endSec 秒 → $segmentPath',
+          );
 
           final args = [
             '-y',
@@ -203,7 +205,10 @@ class VideoConcatService {
             segmentPath,
           ];
 
-          final exitCode = await _ffmpegService.execute(arguments: args, onOutput: onOutput);
+          final exitCode = await _ffmpegService.execute(
+            arguments: args,
+            onOutput: onOutput,
+          );
           if (exitCode != 0) {
             logger.e('片段 $globalSegmentIndex 切割失败: exitCode=$exitCode');
             return 1;
@@ -230,7 +235,10 @@ class VideoConcatService {
           segmentPath,
         ];
 
-        final exitCode = await _ffmpegService.execute(arguments: args, onOutput: onOutput);
+        final exitCode = await _ffmpegService.execute(
+          arguments: args,
+          onOutput: onOutput,
+        );
         if (exitCode != 0) {
           logger.e('完整视频复制失败: exitCode=$exitCode');
           return 1;

@@ -9,15 +9,12 @@ void main() {
   group('ProbeComparer.compare', () {
     test('完全一致时判定兼容', () {
       final comparer = ProbeComparer();
-      final reference = _probeResult([
-        _videoStream(),
-        _audioStream(),
-      ]);
+      final reference = _probeResult([_videoStream(), _audioStream()]);
 
-      final result = comparer.compare(reference, _probeResult([
-        _videoStream(),
-        _audioStream(),
-      ]));
+      final result = comparer.compare(
+        reference,
+        _probeResult([_videoStream(), _audioStream()]),
+      );
 
       expect(result.isCompatible, isTrue);
       expect(result.streamCountMismatch, isNull);
@@ -47,7 +44,10 @@ void main() {
 
       expect(result.isCompatible, isFalse);
       expect(result.streamDiffs, hasLength(1));
-      expect(result.streamDiffs.single.fields.keys, containsAll(['width', 'height', 'pixFmt']));
+      expect(
+        result.streamDiffs.single.fields.keys,
+        containsAll(['width', 'height', 'pixFmt']),
+      );
       expect(result.streamDiffs.single.fields['width'], ('1920', '1280'));
     });
 

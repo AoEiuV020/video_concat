@@ -1,5 +1,6 @@
 import 'package:ffmpeg_kit/ffmpeg_kit.dart';
 import 'package:flutter_test/flutter_test.dart';
+
 import 'package:video_concat_app/src/view_models/trim/trim_segment_editor.dart';
 
 void main() {

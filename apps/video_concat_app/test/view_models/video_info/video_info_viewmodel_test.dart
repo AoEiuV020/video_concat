@@ -9,7 +9,9 @@ void main() {
   group('videoInfoProvider', () {
     test('无参考视频时只探测当前文件', () async {
       final ffprobe = _FakeFFprobeService(
-        byPath: {'/videos/current.mp4': _probeResult(duration: 12, width: 1920)},
+        byPath: {
+          '/videos/current.mp4': _probeResult(duration: 12, width: 1920),
+        },
       );
       final ffmpeg = FFmpegService()..ffmpegPath = '/opt/homebrew/bin/ffmpeg';
       final container = ProviderContainer(
@@ -43,17 +45,19 @@ void main() {
       addTearDown(container.dispose);
 
       final data = await container.read(
-        videoInfoProvider('/videos/current.mp4', refPath: '/videos/ref.mp4')
-            .future,
+        videoInfoProvider(
+          '/videos/current.mp4',
+          refPath: '/videos/ref.mp4',
+        ).future,
       );
 
       expect(ffprobe.probedPaths, ['/videos/current.mp4', '/videos/ref.mp4']);
       expect(data.compareResult, isNotNull);
       expect(data.compareResult!.isCompatible, isFalse);
-      expect(
-        data.compareResult!.streamDiffs.single.fields['width'],
-        ('1920', '1280'),
-      );
+      expect(data.compareResult!.streamDiffs.single.fields['width'], (
+        '1920',
+        '1280',
+      ));
     });
 
     test('探测失败时会向上抛出异常', () async {
@@ -76,10 +80,7 @@ final class _FakeFFprobeService extends FFprobeService {
   final Map<String, String> errors;
   final List<String> probedPaths = [];
 
-  _FakeFFprobeService({
-    this.byPath = const {},
-    this.errors = const {},
-  });
+  _FakeFFprobeService({this.byPath = const {}, this.errors = const {}});
 
   @override
   Future<ProbeResult> probe(String filePath) async {
@@ -97,10 +98,7 @@ final class _FakeFFprobeService extends FFprobeService {
   }
 }
 
-ProbeResult _probeResult({
-  required double duration,
-  required int width,
-}) {
+ProbeResult _probeResult({required double duration, required int width}) {
   return ProbeResult(
     format: FormatInfo(
       filename: '/tmp/demo.mp4',

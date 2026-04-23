@@ -1,11 +1,10 @@
 import 'package:ffmpeg_kit/ffmpeg_kit.dart';
 
-typedef TrimOutpointResult =
-    ({
-      List<TrimSegment> segments,
-      int? pendingInpointUs,
-      String? errorMessage,
-    });
+typedef TrimOutpointResult = ({
+  List<TrimSegment> segments,
+  int? pendingInpointUs,
+  String? errorMessage,
+});
 
 /// 应用当前 outpoint 到片段列表。
 TrimOutpointResult applyTrimOutpoint({
@@ -46,11 +45,7 @@ TrimOutpointResult applyTrimOutpoint({
 
     final nextSegments = [...segments, newSegment]
       ..sort((a, b) => a.inpoint.compareTo(b.inpoint));
-    return (
-      segments: nextSegments,
-      pendingInpointUs: null,
-      errorMessage: null,
-    );
+    return (segments: nextSegments, pendingInpointUs: null, errorMessage: null);
   }
 
   if (segments.isEmpty) {
@@ -89,11 +84,7 @@ TrimOutpointResult applyTrimOutpoint({
 
   final nextSegments = [...segments];
   nextSegments[lastIndex] = updatedSegment;
-  return (
-    segments: nextSegments,
-    pendingInpointUs: null,
-    errorMessage: null,
-  );
+  return (segments: nextSegments, pendingInpointUs: null, errorMessage: null);
 }
 
 bool _overlaps(TrimSegment a, TrimSegment b) {
