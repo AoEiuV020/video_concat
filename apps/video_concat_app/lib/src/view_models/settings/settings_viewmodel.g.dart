@@ -44,7 +44,7 @@ final class SettingsViewModelProvider
   }
 }
 
-String _$settingsViewModelHash() => r'891048cdb1f2719ab22f6069a180eb340db95ca5';
+String _$settingsViewModelHash() => r'4254e02c8462ed1292e0ad6bea25ce8258b65aab';
 
 /// 设置 ViewModel
 

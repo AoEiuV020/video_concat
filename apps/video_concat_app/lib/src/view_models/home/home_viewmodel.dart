@@ -18,6 +18,7 @@ part 'home_viewmodel.g.dart';
 class HomeViewModel extends _$HomeViewModel {
   String? _referenceFilePath;
   final _comparer = ProbeComparer();
+  int _snackbarEventId = 0;
 
   @override
   HomeState build() {
@@ -153,14 +154,19 @@ class HomeViewModel extends _$HomeViewModel {
         areToolsReady: ready,
         toolCheckMessage: msg,
       );
+      if (!ready && msg != null) {
+        _emitSnackbar(msg);
+      }
     } catch (e, s) {
       if (!ref.mounted) return;
       _reportError('工具校验失败', e, s, userMessage: '工具校验失败：$e');
+      const message = '工具校验失败，请前往设置页修复路径';
       state = state.copyWith(
         isCheckingTools: false,
         areToolsReady: false,
-        toolCheckMessage: '工具校验失败，请前往设置页修复路径',
+        toolCheckMessage: message,
       );
+      _emitSnackbar(message);
     }
   }
 
@@ -169,9 +175,7 @@ class HomeViewModel extends _$HomeViewModel {
     logger.d('addVideos ${filePaths.length} 个文件');
     try {
       if (!state.areToolsReady) {
-        state = state.copyWith(
-          errorMessage: state.toolCheckMessage ?? '外部工具不可用',
-        );
+        _setErrorMessage(state.toolCheckMessage ?? '外部工具不可用');
         return;
       }
 
@@ -353,14 +357,16 @@ class HomeViewModel extends _$HomeViewModel {
     );
 
     if (!state.areToolsReady) {
+      const message = '外部工具不可用，请先在设置页配置 FFmpeg/FFprobe';
       state = state.copyWith(
         isGenerating: false,
         generateResult: const GenerateResult(
           state: GenerateState.failed,
           output: '',
-          errorMessage: '外部工具不可用，请先在设置页配置 FFmpeg/FFprobe',
+          errorMessage: message,
         ),
       );
+      _setErrorMessage(message);
       return;
     }
 
@@ -384,6 +390,7 @@ class HomeViewModel extends _$HomeViewModel {
           errorMessage: e.message,
         ),
       );
+      _setErrorMessage(e.message);
       return;
     }
 
@@ -497,7 +504,6 @@ class HomeViewModel extends _$HomeViewModel {
         isGenerating: false,
         lastGeneratedVideo: null,
         segmentedOutputSummary: null,
-        errorMessage: '合并失败：$e',
         generateResult: GenerateResult(
           state: GenerateState.failed,
           output: buffer.toString(),
@@ -505,6 +511,7 @@ class HomeViewModel extends _$HomeViewModel {
           elapsedDuration: elapsedDuration,
         ),
       );
+      _setErrorMessage('合并失败：$e');
     }
   }
 
@@ -715,6 +722,21 @@ class HomeViewModel extends _$HomeViewModel {
   }) {
     if (!ref.mounted) return;
     logger.e(action, error: error, stackTrace: stackTrace);
-    state = state.copyWith(errorMessage: userMessage);
+    _setErrorMessage(userMessage);
+  }
+
+  void _setErrorMessage(String message) {
+    if (!ref.mounted) return;
+    state = state.copyWith(errorMessage: message);
+    _emitSnackbar(message);
+  }
+
+  void _emitSnackbar(String message) {
+    if (!ref.mounted) return;
+    _snackbarEventId += 1;
+    state = state.copyWith(
+      snackbarMessage: message,
+      snackbarEventId: _snackbarEventId,
+    );
   }
 }

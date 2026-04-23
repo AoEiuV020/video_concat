@@ -21,6 +21,8 @@ abstract class HomeState with _$HomeState {
     @Default(false) bool areToolsReady,
     String? toolCheckMessage,
     String? errorMessage,
+    String? snackbarMessage,
+    @Default(0) int snackbarEventId,
     ProbeResult? referenceResult,
     @Default({}) Map<String, bool> videoCompatibility,
   }) = _HomeState;

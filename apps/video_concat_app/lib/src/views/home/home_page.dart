@@ -7,7 +7,6 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../log.dart';
 import '../../models/generate_result.dart';
 import '../../view_models/home/home_state.dart';
 import '../../view_models/home/home_viewmodel.dart';
@@ -27,9 +26,40 @@ class HomePage extends ConsumerStatefulWidget {
 class _HomePageState extends ConsumerState<HomePage> {
   final _scrollController = ScrollController();
   bool _navigatedToSettings = false;
+  late final ProviderSubscription<HomeState> _homeStateSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    _homeStateSubscription = ref.listenManual<HomeState>(
+      homeViewModelProvider,
+      (previous, next) {
+        final previousEventId = previous?.snackbarEventId ?? -1;
+        if (mounted &&
+            next.snackbarMessage != null &&
+            next.snackbarEventId != previousEventId) {
+          ScaffoldMessenger.of(context)
+            ..clearSnackBars()
+            ..showSnackBar(SnackBar(content: Text(next.snackbarMessage!)));
+        }
+
+        if (!next.isCheckingTools &&
+            !next.areToolsReady &&
+            !_navigatedToSettings) {
+          _navigatedToSettings = true;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+            context.push('/settings');
+          });
+        }
+      },
+      fireImmediately: true,
+    );
+  }
 
   @override
   void dispose() {
+    _homeStateSubscription.close();
     _scrollController.dispose();
     super.dispose();
   }
@@ -49,16 +79,6 @@ class _HomePageState extends ConsumerState<HomePage> {
   Widget build(BuildContext context) {
     final state = ref.watch(homeViewModelProvider);
     final vm = ref.read(homeViewModelProvider.notifier);
-
-    if (!state.isCheckingTools &&
-        !state.areToolsReady &&
-        !_navigatedToSettings) {
-      _navigatedToSettings = true;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        context.push('/settings');
-      });
-    }
 
     ref.listen(homeViewModelProvider.select((s) => s.isGenerating), (
       prev,
@@ -85,46 +105,6 @@ class _HomePageState extends ConsumerState<HomePage> {
         context.push(_buildVideoInfoUri(outputPath));
       },
     );
-    ref.listen(
-      homeViewModelProvider.select(
-        (s) => (s.isCheckingTools, s.areToolsReady, s.toolCheckMessage),
-      ),
-      (previous, next) {
-        final (isCheckingTools, areToolsReady, toolCheckMessage) = next;
-        if (isCheckingTools || areToolsReady) {
-          return;
-        }
-
-        if ((previous?.$2 ?? true) == areToolsReady) {
-          return;
-        }
-
-        if (toolCheckMessage != null && mounted) {
-          ScaffoldMessenger.of(context)
-            ..clearSnackBars()
-            ..showSnackBar(SnackBar(content: Text(toolCheckMessage)));
-        }
-
-        try {
-          _navigatedToSettings = true;
-          context.push('/settings');
-        } catch (e, s) {
-          logger.e('跳转设置页失败', error: e, stackTrace: s);
-        }
-      },
-    );
-    ref.listen(homeViewModelProvider.select((s) => s.errorMessage), (
-      previous,
-      next,
-    ) {
-      if (next == null || next.isEmpty || next == previous || !mounted) {
-        return;
-      }
-      ScaffoldMessenger.of(context)
-        ..clearSnackBars()
-        ..showSnackBar(SnackBar(content: Text(next)));
-    });
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('视频合并'),
